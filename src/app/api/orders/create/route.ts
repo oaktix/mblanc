@@ -9,7 +9,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { items, total, shippingDetails } = body;
 
-        // 1. First, create the Order record
+        // 1. Create the Order
         const order = await prisma.order.create({
             data: {
                 total: total,
@@ -20,32 +20,30 @@ export async function POST(req: Request) {
             },
         });
 
-        // 2. Then, create the OrderItems linked to that Order
-        // Using a Promise.all to handle multiple items safely
-        await Promise.all(
-            items.map((item: any) =>
-                prisma.orderItem.create({
-                    data: {
-                        orderId: order.id,
-                        productId: item.id,
-                        quantity: item.quantity,
-                        price: item.price,
-                        // Only connect variation if it's a valid string
-                        ...(item.variationId && item.variationId.trim() !== ""
-                            ? { variationId: item.variationId }
-                            : {}),
-                    },
-                })
-            )
-        );
+        // 2. Create OrderItems with strict cleaning
+        for (const item of items) {
+            // Clean the IDs to remove any hidden whitespace/newlines
+            const cleanProductId = String(item.id).trim();
+            const cleanVariationId = item.variationId ? String(item.variationId).trim() : null;
+
+            console.log(`>>> [DEBUG] Attempting to link Product: "${cleanProductId}" to Order: "${order.id}"`);
+
+            await prisma.orderItem.create({
+                data: {
+                    orderId: order.id,
+                    productId: cleanProductId,
+                    quantity: Number(item.quantity),
+                    price: Number(item.price),
+                    // Only include variationId if it's not null/empty
+                    ...(cleanVariationId && cleanVariationId !== "" ? { variationId: cleanVariationId } : {}),
+                },
+            });
+        }
 
         return NextResponse.json({ id: order.id }, { status: 201 });
 
     } catch (error: any) {
         console.error(">>> [ORDER_CREATE] CRITICAL ERROR:", error);
-
-        // If the order was created but items failed, you might want to handle that,
-        // but for now, we just return the specific error message.
         return NextResponse.json(
             { error: "Order creation failed", details: error.message },
             { status: 500 }
