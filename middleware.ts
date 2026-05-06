@@ -5,21 +5,53 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const isAuth = !!token;
-    const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
+    const { pathname } = req.nextUrl;
 
-    if (isAdminRoute && (!isAuth || (token.role !== "ADMIN" && token.role !== "STAFF"))) {
-      return NextResponse.redirect(new URL("/auth/login", req.url));
+    // 1. Explicitly allow the webhook to pass through without any checks
+    if (pathname.startsWith("/api/webhooks/paystack")) {
+      return NextResponse.next();
+    }
+
+    // 2. Admin & Staff Authorization Logic
+    const isAdminRoute = pathname.startsWith("/admin");
+    if (isAdminRoute) {
+      const hasAccess = isAuth && (token?.role === "ADMIN" || token?.role === "STAFF");
+
+      if (!hasAccess) {
+        return NextResponse.redirect(new URL("/auth/login", req.url));
+      }
     }
 
     return NextResponse.next();
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      // This logic ensures that if the route is matched in the config below, 
+      // the user must be authorized (logged in) EXCEPT if we handle it in the function above.
+      authorized: ({ token, req }) => {
+        // If it's the webhook, we don't require a token
+        if (req.nextUrl.pathname.startsWith("/api/webhooks/paystack")) {
+          return true;
+        }
+        return !!token;
+      },
     },
   }
 );
 
 export const config = {
-  matcher: ["/admin/:path*", "/account/:path*"],
+  /*
+   * Match all request paths except for the ones starting with:
+   * - api (specifically excluding our webhook from protection)
+   * - _next/static (static files)
+   * - _next/image (image optimization files)
+   * - favicon.ico (favicon file)
+   */
+  matcher: [
+    "/admin/:path*",
+    "/account/:path*",
+    // We add the webhook here just so the 'authorized' callback 
+    // can explicitly grant it permission.
+    "/api/webhooks/paystack/:path*"
+  ],
 };
