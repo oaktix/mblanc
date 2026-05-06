@@ -8,6 +8,9 @@ import { revalidatePath } from "next/cache";
 import { resend } from "@/lib/resend";
 import { OrderUpdateEmail } from "@/components/emails/OrderUpdateEmail";
 
+export const dynamic = "force-dynamic";
+
+
 /**
  * Server Action to update order status and notify customer
  */

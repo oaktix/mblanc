@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { Search, Mail, Phone, Calendar, ShoppingBag } from "lucide-react";
+export const dynamic = "force-dynamic";
 
 export default async function AdminCustomersPage() {
   const customers = await prisma.user.findMany({
