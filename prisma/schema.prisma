@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  orders        Order[]
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  slug        String      @unique
+  category    String
+  description String      @db.Text
+  basePrice   Float
+  sku         String      @unique
+  stock       Int         @default(0)
+  status      String      @default("DRAFT") // DRAFT, PUBLISHED, OUT_OF_STOCK
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  images      String[]
+  variations  Variation[]
+  orderItems  OrderItem[]
+}
+
+model Variation {
+  id        String      @id @default(cuid())
+  productId String
+  product   Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      String?
+  color     String?
+  fabric    String?
+  sku       String      @unique
+  price     Float
+  stock     Int         @default(0)
+  images    String[]
+  orderItems OrderItem[]
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  total           Float
+  status          OrderStatus @default(PENDING)
+  shippingDetails Json?
+  paymentStatus   String      @default("PENDING") // PENDING, SUCCESS, FAILED
+  paystackRef     String?     @unique
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id          String     @id @default(cuid())
+  orderId     String
+  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product    @relation(fields: [productId], references: [id])
+  variationId String?
+  variation   Variation? @relation(fields: [variationId], references: [id])
+  quantity    Int
+  price       Float
+}
+
+model SiteSettings {
+  id          String   @id @default("singleton")
+  siteName    String   @default("MBlanc Bespoke")
+  headerLogo  String?
+  footerLogo  String?
+  contactEmail String   @default("hello@mblancfits.com")
+  updatedAt   DateTime @updatedAt
+}
+

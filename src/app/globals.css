@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-burgundy: #722F37;
+  --color-gold: #D4AF37;
+  --color-black: #0A0A0A;
+  --color-charcoal: #2C2C2C;
+  --color-warm-gray: #8B8680;
+  --color-cream: #F5F0EB;
+  --color-ivory: #FAF8F5;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
+}
+
+/* Custom base styles */
+body {
+  @apply bg-cream text-charcoal font-sans;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    @apply bg-black text-ivory;
+  }
+}
