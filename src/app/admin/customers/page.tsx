@@ -21,9 +21,9 @@ export default async function AdminCustomersPage() {
         <div className="p-6 border-b border-gray-50 dark:border-gray-900 flex justify-between items-center">
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search by name or email..." 
+            <input
+              type="text"
+              placeholder="Search by name or email..."
               className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:border-gold transition-colors"
             />
           </div>
@@ -76,7 +76,7 @@ export default async function AdminCustomersPage() {
                       {customer.orders.length} orders
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm font-bold text-burgundy">
+                  <td className=" text-burgundy">
                     ₦{customer.orders.reduce((acc, o) => acc + o.total, 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-right">

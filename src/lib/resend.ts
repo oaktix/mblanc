@@ -1,3 +1,6 @@
-import { Resend } from "resend";
+import { Resend } from 'resend';
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
+// This ensures the build doesn't crash if the key is missing during compilation
+const apiKey = process.env.RESEND_API_KEY || "re_dummy_key_for_build";
+
+export const resend = new Resend(apiKey);
