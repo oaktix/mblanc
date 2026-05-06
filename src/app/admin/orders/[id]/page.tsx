@@ -12,7 +12,7 @@ async function updateOrderstatus as OrderStatus(orderId: string, status as Order
   "use server";
   const order = await prisma.order.update({
     where: { id: orderId },
-    data: { status: status as OrderStatus },
+    data: { status: status as any },
     include: { user: true },
   });
 
@@ -201,8 +201,8 @@ export default async function OrderDetailPage({
                   <button
                     type="submit"
                     className={`w-full py-2 px-4 text-xs font-bold rounded-lg border transition-all ${order.status as OrderStatus === status as OrderStatus
-                        ? "bg-gold border-gold text-black"
-                        : "border-gray-200 dark:border-gray-800 text-gray-500 hover:border-gold hover:text-gold"
+                      ? "bg-gold border-gold text-black"
+                      : "border-gray-200 dark:border-gray-800 text-gray-500 hover:border-gold hover:text-gold"
                       }`}
                   >
                     {status as OrderStatus}
