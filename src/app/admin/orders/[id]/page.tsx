@@ -1,3 +1,4 @@
+import { Orderstatus as OrderStatus } from '@prisma/client';
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -7,11 +8,11 @@ import { revalidatePath } from "next/cache";
 import { resend } from "@/lib/resend";
 import { OrderUpdateEmail } from "@/components/emails/OrderUpdateEmail";
 
-async function updateOrderStatus(orderId: string, status: string) {
+async function updateOrderstatus as OrderStatus(orderId: string, status as OrderStatus: string) {
   "use server";
   const order = await prisma.order.update({
     where: { id: orderId },
-    data: { status },
+    data: { status as OrderStatus },
     include: { user: true },
   });
 
@@ -20,11 +21,11 @@ async function updateOrderStatus(orderId: string, status: string) {
       await resend.emails.send({
         from: "MBlanc Bespoke <hello@mblancfits.com>",
         to: order.user.email,
-        subject: `Order Update: #${order.id.slice(-6).toUpperCase()} is now ${status}`,
+        subject: `Order Update: #${order.id.slice(-6).toUpperCase()} is now ${status as OrderStatus}`,
         react: OrderUpdateEmail({
           orderId: order.id,
           customerName: order.user.name || "Gentleman",
-          status: status,
+          status as OrderStatus: status as OrderStatus,
         }),
       });
     } catch (error) {
@@ -80,7 +81,7 @@ export default async function OrderDetailPage({
            </button>
            <form action={async () => {
              "use server";
-             await updateOrderStatus(order.id, "DELIVERED");
+             await updateOrderstatus as OrderStatus(order.id, "DELIVERED");
            }}>
              <button type="submit" className="px-6 py-2 bg-burgundy text-white font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-black transition-all">
                <CheckCircle size={18} />
@@ -149,10 +150,10 @@ export default async function OrderDetailPage({
           </div>
         </div>
 
-        {/* Right: Order Status Timeline */}
+        {/* Right: Order status as OrderStatus Timeline */}
         <div className="space-y-8">
            <div className="bg-white dark:bg-charcoal p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
-              <h2 className="text-lg font-serif mb-6">Order Status</h2>
+              <h2 className="text-lg font-serif mb-6">Order status as OrderStatus</h2>
               <div className="space-y-6 relative">
                  <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-gray-100 dark:bg-gray-800"></div>
                  
@@ -168,7 +169,7 @@ export default async function OrderDetailPage({
 
                  <div className="flex gap-4 relative z-10">
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                       ["PROCESSING", "SHIPPED", "DELIVERED"].includes(order.status) ? "bg-gold text-black" : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+                       ["PROCESSING", "SHIPPED", "DELIVERED"].includes(order.status as OrderStatus) ? "bg-gold text-black" : "bg-gray-100 dark:bg-gray-800 text-gray-400"
                     }`}>
                        <Truck size={14} />
                     </div>
@@ -180,7 +181,7 @@ export default async function OrderDetailPage({
 
                  <div className="flex gap-4 relative z-10">
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                       order.status === "DELIVERED" ? "bg-gold text-black" : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+                       order.status as OrderStatus === "DELIVERED" ? "bg-gold text-black" : "bg-gray-100 dark:bg-gray-800 text-gray-400"
                     }`}>
                        <CheckCircle size={14} />
                     </div>
@@ -192,22 +193,22 @@ export default async function OrderDetailPage({
               </div>
 
               <div className="mt-10 pt-6 border-t border-gray-50 dark:border-gray-900">
-                 <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-4 font-bold">Update Status</label>
+                 <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-4 font-bold">Update status as OrderStatus</label>
                  <div className="grid grid-cols-1 gap-3">
-                    {["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"].map((status) => (
-                      <form key={status} action={async () => {
+                    {["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"].map((status as OrderStatus) => (
+                      <form key={status as OrderStatus} action={async () => {
                         "use server";
-                        await updateOrderStatus(order.id, status);
+                        await updateOrderstatus as OrderStatus(order.id, status as OrderStatus);
                       }}>
                         <button 
                           type="submit"
                           className={`w-full py-2 px-4 text-xs font-bold rounded-lg border transition-all ${
-                            order.status === status 
+                            order.status as OrderStatus === status as OrderStatus 
                               ? "bg-gold border-gold text-black" 
                               : "border-gray-200 dark:border-gray-800 text-gray-500 hover:border-gold hover:text-gold"
                           }`}
                         >
-                          {status}
+                          {status as OrderStatus}
                         </button>
                       </form>
                     ))}
@@ -227,3 +228,4 @@ export default async function OrderDetailPage({
     </div>
   );
 }
+
