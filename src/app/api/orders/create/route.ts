@@ -9,7 +9,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { items, total, shippingDetails } = body;
 
-        // 1. Create the Order
+        // 1. Create the Order normally
         const order = await prisma.order.create({
             data: {
                 total: total,
@@ -20,32 +20,35 @@ export async function POST(req: Request) {
             },
         });
 
-        // 2. Create OrderItems with strict cleaning
+        // 2. Use Raw SQL to insert items
+        // This bypasses Prisma's client-side foreign key checks
         for (const item of items) {
-            // Clean the IDs to remove any hidden whitespace/newlines
-            const cleanProductId = String(item.id).trim();
-            const cleanVariationId = item.variationId ? String(item.variationId).trim() : null;
+            const productId = String(item.id).trim();
+            const price = Number(item.price);
+            const qty = Number(item.quantity);
+            const varId = item.variationId ? String(item.variationId).trim() : null;
 
-            console.log(`>>> [DEBUG] Attempting to link Product: "${cleanProductId}" to Order: "${order.id}"`);
+            console.log(`>>> [SQL EXEC] Linking Product ${productId} to Order ${order.id}`);
 
-            await prisma.orderItem.create({
-                data: {
-                    orderId: order.id,
-                    productId: cleanProductId,
-                    quantity: Number(item.quantity),
-                    price: Number(item.price),
-                    // Only include variationId if it's not null/empty
-                    ...(cleanVariationId && cleanVariationId !== "" ? { variationId: cleanVariationId } : {}),
-                },
-            });
+            await prisma.$executeRaw`
+        INSERT INTO "OrderItem" ("id", "orderId", "productId", "quantity", "price", "variationId")
+        VALUES (
+          ${crypto.randomUUID()}, 
+          ${order.id}, 
+          ${productId}, 
+          ${qty}, 
+          ${price}, 
+          ${varId}
+        )
+      `;
         }
 
         return NextResponse.json({ id: order.id }, { status: 201 });
 
     } catch (error: any) {
-        console.error(">>> [ORDER_CREATE] CRITICAL ERROR:", error);
+        console.error(">>> [ORDER_CREATE] SQL ERROR:", error.message);
         return NextResponse.json(
-            { error: "Order creation failed", details: error.message },
+            { error: "Database rejected the order items", details: error.message },
             { status: 500 }
         );
     }
