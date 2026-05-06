@@ -12,6 +12,10 @@ export async function POST(req: Request) {
         const paystackSignature = req.headers.get('x-paystack-signature');
 
         // 1. Signature Verification
+        if (!paystackSignature) {
+            return new Response('No signature provided', { status: 401 });
+        }
+
         const hash = crypto
             .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY!)
             .update(body)
@@ -26,36 +30,44 @@ export async function POST(req: Request) {
 
         // 2. Process Successful Charge
         if (event.event === 'charge.success') {
-            const { reference, customer } = event.data;
+            const { reference, customer, amount } = event.data;
 
             console.log(">>> [PAYSTACK WEBHOOK] Processing Reference:", reference);
 
-            // SAFETY CHECK: Find order first to avoid Prisma crash
+            // Find order and check if it's already processed
             const existingOrder = await prisma.order.findUnique({
-                where: { id: reference }
+                where: { id: reference },
+                include: { user: true }
             });
 
             if (!existingOrder) {
                 console.error(`>>> [PAYSTACK WEBHOOK] Order ${reference} not found in DB.`);
+                // Return 200 anyway so Paystack stops retrying, or 404 if you want to debug
                 return NextResponse.json({ error: "Order not found" }, { status: 404 });
             }
 
-            // Update Order Status and Payment Status
+            // IDEMPOTENCY CHECK: If already paid, don't send email again
+            if (existingOrder.paymentStatus === "SUCCESS") {
+                console.log(">>> [PAYSTACK WEBHOOK] Order already processed. Skipping.");
+                return NextResponse.json({ received: true }, { status: 200 });
+            }
+
+            // 3. Update Order Status and Payment Status
             const order = await prisma.order.update({
                 where: { id: reference },
                 data: {
                     status: OrderStatus.PROCESSING,
                     paymentStatus: "SUCCESS",
-                    paystackRef: reference // Saving the reference for record keeping
+                    paystackRef: reference
                 },
                 include: { user: true }
             });
 
             console.log(">>> [PAYSTACK WEBHOOK] Database updated successfully.");
 
-            // 3. Email Logic (Pulling from JSON shippingDetails)
+            // 4. Email Logic
             const shipping = order.shippingDetails as any;
-            const recipientEmail = customer.email || shipping?.email || order.user?.email;
+            const recipientEmail = shipping?.email || customer.email || order.user?.email;
 
             if (recipientEmail) {
                 console.log(">>> [PAYSTACK WEBHOOK] Sending email to:", recipientEmail);
@@ -64,19 +76,29 @@ export async function POST(req: Request) {
                     await resend.emails.send({
                         from: 'MBlanc Fits <orders@mblancfits.com>',
                         to: recipientEmail,
-                        subject: `Order Confirmed - #${order.id}`,
+                        subject: `Order Confirmed - #${order.id.slice(-6).toUpperCase()}`,
                         html: `
-                            <div style="font-family: serif; color: #333;">
-                                <h1 style="color: #800020;">MBLANC FITS</h1>
-                                <h2>Order Confirmed</h2>
-                                <p>Thank you for your purchase. Your order <strong>#${order.id}</strong> is now being processed.</p>
-                                <p>Amount Paid: ₦${(order.total).toLocaleString()}</p>
+                            <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
+                                <h1 style="color: #800020; text-align: center;">MBLANC FITS</h1>
+                                <hr style="border: 0; border-top: 1px solid #eee;" />
+                                <h2 style="text-align: center;">Order Confirmed</h2>
+                                <p>Hi ${shipping?.name || 'there'},</p>
+                                <p>Thank you for your purchase. Your order is now being processed.</p>
+                                <div style="background: #f9f9f9; padding: 15px; border-radius: 5px;">
+                                    <p><strong>Order ID:</strong> #${order.id}</p>
+                                    <p><strong>Amount Paid:</strong> ₦${(order.total).toLocaleString()}</p>
+                                    <p><strong>Shipping to:</strong> ${shipping?.address}, ${shipping?.city}</p>
+                                </div>
+                                <p style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
+                                    If you have any questions, reply to this email.
+                                </p>
                             </div>
                         `
                     });
                     console.log(">>> [PAYSTACK WEBHOOK] Email sent successfully.");
                 } catch (emailErr) {
                     console.error(">>> [PAYSTACK WEBHOOK] Resend Error:", emailErr);
+                    // We don't return an error response here because the DB update was successful
                 }
             }
         }
