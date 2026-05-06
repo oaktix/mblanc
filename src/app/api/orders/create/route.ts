@@ -9,46 +9,62 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { items, total, shippingDetails } = body;
 
-        // 1. Create the Order normally
+        if (!items || items.length === 0) {
+            return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+        }
+
+        // 1. Create the parent Order record first
         const order = await prisma.order.create({
             data: {
                 total: total,
                 status: "PENDING",
                 paymentStatus: "PENDING",
-                shippingDetails: shippingDetails,
+                shippingDetails: shippingDetails, // Stores email, address, etc. as JSON
                 userId: (session?.user as any)?.id || null,
             },
         });
 
-        // 2. Use Raw SQL to insert items
-        // This bypasses Prisma's client-side foreign key checks
+        console.log(`>>> [ORDER_CREATED] ID: ${order.id}. Processing ${items.length} items...`);
+
+        // 2. Create OrderItems one by one to ensure ID sanitization
         for (const item of items) {
-            const productId = String(item.id).trim();
-            const price = Number(item.price);
-            const qty = Number(item.quantity);
-            const varId = item.variationId ? String(item.variationId).trim() : null;
+            // CLEANING: Strip the "--" or any trailing hyphens found in your logs
+            const cleanProductId = String(item.id).replace(/-+$/, "").trim();
 
-            console.log(`>>> [SQL EXEC] Linking Product ${productId} to Order ${order.id}`);
+            // Clean variationId if it exists, otherwise keep as null
+            const cleanVariationId = item.variationId
+                ? String(item.variationId).replace(/-+$/, "").trim()
+                : null;
 
-            await prisma.$executeRaw`
-        INSERT INTO "OrderItem" ("id", "orderId", "productId", "quantity", "price", "variationId")
-        VALUES (
-          ${crypto.randomUUID()}, 
-          ${order.id}, 
-          ${productId}, 
-          ${qty}, 
-          ${price}, 
-          ${varId}
-        )
-      `;
+            console.log(`>>> [ITEM_INSERT] Linking Product: "${cleanProductId}" to Order: "${order.id}"`);
+
+            await prisma.orderItem.create({
+                data: {
+                    orderId: order.id,
+                    productId: cleanProductId,
+                    quantity: Number(item.quantity),
+                    price: Number(item.price),
+                    // Only connect variation if the cleaned string is valid
+                    ...(cleanVariationId && cleanVariationId !== ""
+                        ? { variationId: cleanVariationId }
+                        : {}),
+                },
+            });
         }
 
+        // 3. Return the order ID to the frontend so it can initialize Paystack
         return NextResponse.json({ id: order.id }, { status: 201 });
 
     } catch (error: any) {
-        console.error(">>> [ORDER_CREATE] SQL ERROR:", error.message);
+        console.error(">>> [ORDER_CREATE] CRITICAL ERROR:", error);
+
+        // Return the specific error message to help you debug in the browser console
         return NextResponse.json(
-            { error: "Database rejected the order items", details: error.message },
+            {
+                error: "Failed to initialize checkout",
+                details: error.message,
+                code: error.code
+            },
             { status: 500 }
         );
     }
