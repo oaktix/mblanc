@@ -3,7 +3,6 @@
 import { useCartStore } from "@/store/useCartStore";
 import { useState, useEffect } from "react";
 import { usePaystackPayment } from "react-paystack";
-import { useRouter } from "next/navigation";
 
 export default function CheckoutForm() {
   const { items, getTotalPrice, clearCart } = useCartStore();
@@ -13,10 +12,8 @@ export default function CheckoutForm() {
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
-  const router = useRouter();
 
   // 1. Paystack Configuration
-  // The 'reference' must be the Order ID from your database
   const config = {
     reference: orderId || "",
     email: email,
@@ -28,8 +25,13 @@ export default function CheckoutForm() {
 
   const onSuccess = (reference: any) => {
     console.log("Payment Successful:", reference);
+
+    // Clear the cart before leaving
     clearCart();
-    router.push("/checkout/success");
+
+    // Use window.location for a hard redirect to ensure the page 
+    // updates and clears all previous states immediately.
+    window.location.assign("/checkout/success");
   };
 
   const onClose = () => {
@@ -37,10 +39,10 @@ export default function CheckoutForm() {
     setOrderId(null);
   };
 
-  // 2. Trigger Payment Popup
-  // FIX: Passing callbacks inside a single object to resolve "Expected 1 argument"
+  // 2. Trigger Payment Popup when Order ID is generated
   useEffect(() => {
     if (orderId) {
+      // Corrected: Passing callbacks inside an object as the single argument
       initializePayment({ onSuccess, onClose });
     }
   }, [orderId, initializePayment]);
@@ -52,7 +54,7 @@ export default function CheckoutForm() {
     setLoading(true);
 
     try {
-      // 3. Create the order in Supabase first
+      // 3. Create the order in your database
       const response = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,7 +151,7 @@ export default function CheckoutForm() {
             {items.map((item) => (
               <div key={`${item.id}-${item.variationId}`} className="flex justify-between text-sm">
                 <div className="flex flex-col">
-                  <span className="font-medium">{item.name}</span>
+                  <span className="font-medium text-gray-800 dark:text-gray-200">{item.name}</span>
                   <span className="text-xs text-gray-400">Qty: {item.quantity}</span>
                 </div>
                 <span className="font-semibold">₦{(item.price * item.quantity).toLocaleString()}</span>
