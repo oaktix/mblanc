@@ -11,56 +11,73 @@ export async function POST(req: Request) {
         const body = await req.text();
         const paystackSignature = req.headers.get('x-paystack-signature');
 
-        // 1. Verification Log
-        console.log(">>> [PAYSTACK WEBHOOK] Headers received, verifying signature...");
-
+        // 1. Signature Verification
         const hash = crypto
             .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY!)
             .update(body)
             .digest('hex');
 
         if (hash !== paystackSignature) {
-            console.error(">>> [PAYSTACK WEBHOOK] Signature Mismatch! Verification failed.");
+            console.error(">>> [PAYSTACK WEBHOOK] Signature Mismatch!");
             return new Response('Invalid signature', { status: 401 });
         }
 
         const event = JSON.parse(body);
-        console.log(">>> [PAYSTACK WEBHOOK] Event Type:", event.event);
-        console.log(">>> [PAYSTACK WEBHOOK] Reference:", event.data?.reference);
 
         // 2. Process Successful Charge
         if (event.event === 'charge.success') {
             const { reference, customer } = event.data;
 
-            console.log(">>> [PAYSTACK WEBHOOK] Updating database for Order:", reference);
+            console.log(">>> [PAYSTACK WEBHOOK] Processing Reference:", reference);
 
+            // SAFETY CHECK: Find order first to avoid Prisma crash
+            const existingOrder = await prisma.order.findUnique({
+                where: { id: reference }
+            });
+
+            if (!existingOrder) {
+                console.error(`>>> [PAYSTACK WEBHOOK] Order ${reference} not found in DB.`);
+                return NextResponse.json({ error: "Order not found" }, { status: 404 });
+            }
+
+            // Update Order Status and Payment Status
             const order = await prisma.order.update({
                 where: { id: reference },
-                data: { status: OrderStatus.PROCESSING },
+                data: {
+                    status: OrderStatus.PROCESSING,
+                    paymentStatus: "SUCCESS",
+                    paystackRef: reference // Saving the reference for record keeping
+                },
                 include: { user: true }
             });
 
             console.log(">>> [PAYSTACK WEBHOOK] Database updated successfully.");
 
-            // 3. Email Logic
-            const recipientEmail = customer.email || order.user?.email;
+            // 3. Email Logic (Pulling from JSON shippingDetails)
+            const shipping = order.shippingDetails as any;
+            const recipientEmail = customer.email || shipping?.email || order.user?.email;
 
             if (recipientEmail) {
-                console.log(">>> [PAYSTACK WEBHOOK] Attempting to send email to:", recipientEmail);
+                console.log(">>> [PAYSTACK WEBHOOK] Sending email to:", recipientEmail);
 
                 try {
-                    const emailResponse = await resend.emails.send({
+                    await resend.emails.send({
                         from: 'MBlanc Fits <orders@mblancfits.com>',
                         to: recipientEmail,
                         subject: `Order Confirmed - #${order.id}`,
-                        html: `<h1 style="color: #800020;">Order Confirmed</h1><p>Order #${order.id} is being processed.</p>`
+                        html: `
+                            <div style="font-family: serif; color: #333;">
+                                <h1 style="color: #800020;">MBLANC FITS</h1>
+                                <h2>Order Confirmed</h2>
+                                <p>Thank you for your purchase. Your order <strong>#${order.id}</strong> is now being processed.</p>
+                                <p>Amount Paid: ₦${(order.total).toLocaleString()}</p>
+                            </div>
+                        `
                     });
-                    console.log(">>> [PAYSTACK WEBHOOK] Resend API Response:", emailResponse);
+                    console.log(">>> [PAYSTACK WEBHOOK] Email sent successfully.");
                 } catch (emailErr) {
-                    console.error(">>> [PAYSTACK WEBHOOK] Resend API Error:", emailErr);
+                    console.error(">>> [PAYSTACK WEBHOOK] Resend Error:", emailErr);
                 }
-            } else {
-                console.warn(">>> [PAYSTACK WEBHOOK] No recipient email found. Skipping email.");
             }
         }
 
