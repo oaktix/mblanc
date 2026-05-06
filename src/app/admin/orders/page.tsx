@@ -19,10 +19,10 @@ export default async function AdminOrdersPage() {
           <p className="text-gray-500 font-light mt-1">Track and manage bespoke requests and store orders.</p>
         </div>
         <div className="flex gap-4">
-           <button className="px-6 py-2 bg-white dark:bg-charcoal border border-gray-200 dark:border-gray-800 text-charcoal dark:text-ivory font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50 transition-all">
-             <Download size={18} />
-             Export
-           </button>
+          <button className="px-6 py-2 bg-white dark:bg-charcoal border border-gray-200 dark:border-gray-800 text-charcoal dark:text-ivory font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50 transition-all">
+            <Download size={18} />
+            Export
+          </button>
         </div>
       </div>
 
@@ -30,9 +30,9 @@ export default async function AdminOrdersPage() {
         <div className="p-6 border-b border-gray-50 dark:border-gray-900 flex justify-between items-center">
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search by order ID or name..." 
+            <input
+              type="text"
+              placeholder="Search by order ID or name..."
               className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:border-gold transition-colors"
             />
           </div>
@@ -67,13 +67,12 @@ export default async function AdminOrdersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm">{order.items.length} items</td>
-                    <td className="px-6 py-4 text-sm font-bold">₦{order.totalAmount.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm font-bold">₦{(order as any).totalAmount?.toLocaleString() ?? "0"}</td>
                     <td className="px-6 py-4">
-                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${
-                        order.status === "DELIVERED" ? "bg-green-100 text-green-700" : 
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${order.status === "DELIVERED" ? "bg-green-100 text-green-700" :
                         order.status === "PROCESSING" ? "bg-blue-100 text-blue-700" :
-                        "bg-amber-100 text-amber-700"
-                      }`}>
+                          "bg-amber-100 text-amber-700"
+                        }`}>
                         {order.status}
                       </span>
                     </td>
