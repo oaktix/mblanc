@@ -9,26 +9,6 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { items, total, shippingDetails } = body;
 
-        // 1. VERIFICATION STEP
-        // Check if the products actually exist before trying to create the order
-        const productIds = items.map((i: any) => i.id);
-        const existingProducts = await prisma.product.findMany({
-            where: { id: { in: productIds } },
-            select: { id: true }
-        });
-
-        if (existingProducts.length !== items.length) {
-            const foundIds = existingProducts.map(p => p.id);
-            const missingIds = productIds.filter((id: string) => !foundIds.includes(id));
-
-            console.error(">>> [ORDER_CREATE] Missing Product IDs in DB:", missingIds);
-            return NextResponse.json({
-                error: "Some items in your cart no longer exist. Please clear cart and try again.",
-                missingIds
-            }, { status: 400 });
-        }
-
-        // 2. CREATE ORDER
         const order = await prisma.order.create({
             data: {
                 total: total,
@@ -37,20 +17,25 @@ export async function POST(req: Request) {
                 shippingDetails: shippingDetails,
                 userId: (session?.user as any)?.id || null,
                 items: {
-                    create: items.map((item: any) => ({
-                        // Use 'connect' to be explicit about the relationship
-                        product: {
-                            connect: { id: item.id }
-                        },
-                        quantity: item.quantity,
-                        price: item.price,
-                        // Only add variation if it exists
-                        ...(item.variationId && {
-                            variation: {
-                                connect: { id: item.variationId }
+                    create: items.map((item: any) => {
+                        // Base item data
+                        const itemData: any = {
+                            quantity: item.quantity,
+                            price: item.price,
+                            product: {
+                                connect: { id: item.id }
                             }
-                        })
-                    })),
+                        };
+
+                        // ONLY connect variation if the ID exists and is not an empty string
+                        if (item.variationId && item.variationId.trim() !== "") {
+                            itemData.variation = {
+                                connect: { id: item.variationId }
+                            };
+                        }
+
+                        return itemData;
+                    }),
                 },
             },
         });
@@ -58,7 +43,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ id: order.id }, { status: 201 });
 
     } catch (error: any) {
-        console.error(">>> [ORDER_CREATE] CRITICAL ERROR:", error);
+        console.error(">>> [ORDER_CREATE] DATABASE ERROR:", error);
+
+        // This will help us see if it's a variation error specifically
         return NextResponse.json(
             { error: "Database constraint error", details: error.message },
             { status: 500 }
