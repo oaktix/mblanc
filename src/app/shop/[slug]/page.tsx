@@ -67,7 +67,7 @@ export default function ProductDetailPage({
           className="mb-8"
         >
            <Link href="/shop" className="flex items-center gap-2 text-xs uppercase tracking-widest text-gray-400 hover:text-gold transition-colors">
-              <ArrowLeft size={14} /> Back to Collection
+              <ArrowLeft size={14} /> Back to Shop
            </Link>
         </motion.div>
 

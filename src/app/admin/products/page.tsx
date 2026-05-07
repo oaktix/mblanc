@@ -13,7 +13,7 @@ export default async function AdminProductsPage() {
       <div className="flex justify-between items-center mb-10">
         <div>
           <h1 className="text-3xl font-serif text-charcoal dark:text-ivory">Products Inventory</h1>
-          <p className="text-gray-500 font-light mt-1">Manage your boutique collections and inventory.</p>
+          <p className="text-gray-500 font-light mt-1">Manage your boutique categories and inventory.</p>
         </div>
         <Link 
           href="/admin/products/new" 

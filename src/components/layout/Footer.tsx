@@ -38,10 +38,10 @@ export default function Footer() {
           <div>
             <h4 className="text-gold font-semibold uppercase tracking-wider text-sm mb-6">Shop</h4>
             <ul className="space-y-4">
-              <li><Link href="/collections/corporate" className="text-gray-400 hover:text-white transition-colors text-sm">Corporate Fits</Link></li>
-              <li><Link href="/collections/agbada" className="text-gray-400 hover:text-white transition-colors text-sm">Regal Agbadas</Link></li>
-              <li><Link href="/collections/kaftans" className="text-gray-400 hover:text-white transition-colors text-sm">Elegant Kaftans</Link></li>
-              <li><Link href="/collections/suits" className="text-gray-400 hover:text-white transition-colors text-sm">Bespoke Suits</Link></li>
+              <li><Link href="/shop?category=Corporate" className="text-gray-400 hover:text-white transition-colors text-sm">Corporate Fits</Link></li>
+              <li><Link href="/shop?category=Agbada" className="text-gray-400 hover:text-white transition-colors text-sm">Regal Agbadas</Link></li>
+              <li><Link href="/shop?category=Kaftans" className="text-gray-400 hover:text-white transition-colors text-sm">Elegant Kaftans</Link></li>
+              <li><Link href="/shop?category=Suits" className="text-gray-400 hover:text-white transition-colors text-sm">Bespoke Suits</Link></li>
             </ul>
           </div>
 

@@ -49,7 +49,7 @@ export default function Categories() {
           <div className="w-16 h-1 bg-gold mx-auto mb-6"></div>
           <h2 className="text-4xl md:text-5xl font-serif mb-4">Our Masterpieces</h2>
           <p className="text-gray-500 max-w-2xl mx-auto font-light">
-            Explore our curated collections, each piece crafted with meticulous attention to detail and cultural pride.
+            Explore our curated categories, each piece crafted with meticulous attention to detail and cultural pride.
           </p>
         </motion.div>
 
@@ -78,7 +78,7 @@ export default function Categories() {
 
                     <div className="relative z-10 flex flex-col items-center">
                       <div className="absolute inset-0 bg-black/40 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 z-20 flex items-center justify-center -m-8">
-                        <span className="text-gold border border-gold px-6 py-2 uppercase tracking-widest text-xs sm:text-sm font-semibold">View Collection</span>
+                        <span className="text-gold border border-gold px-6 py-2 uppercase tracking-widest text-xs sm:text-sm font-semibold">View Category</span>
                       </div>
                       <Icon size={40} className="text-gold mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-500" strokeWidth={1} />
                       <h3 className="text-xl sm:text-2xl font-serif mb-2 sm:mb-4 text-white">{category.name}</h3>

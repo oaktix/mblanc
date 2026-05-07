@@ -88,13 +88,15 @@ export default function Navbar() {
 
             {/* Icons */}
             <div className="flex items-center space-x-4 md:space-x-8">
-              <motion.button 
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="text-ivory hover:text-gold transition-colors hidden sm:block"
-              >
-                <Search size={18} strokeWidth={1.5} />
-              </motion.button>
+              <Link href="/shop">
+                <motion.button 
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="text-ivory hover:text-gold transition-colors hidden sm:block"
+                >
+                  <Search size={18} strokeWidth={1.5} />
+                </motion.button>
+              </Link>
               <Link href="/auth/login" className="hidden sm:block">
                 <motion.div 
                   whileHover={{ scale: 1.1 }}
@@ -178,9 +180,11 @@ export default function Navbar() {
                   <User size={20} />
                   <span className="uppercase tracking-widest text-xs">Account</span>
                 </Link>
-                <button className="w-full py-4 bg-gold text-black font-bold uppercase tracking-widest text-xs">
-                  Book a Fitting
-                </button>
+                <Link href="/contact" onClick={() => setIsMenuOpen(false)}>
+                  <button className="w-full py-4 bg-gold text-black font-bold uppercase tracking-widest text-xs">
+                    Book a Fitting
+                  </button>
+                </Link>
               </div>
             </motion.div>
           </>

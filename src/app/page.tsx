@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import AboutExcerpt from "@/components/home/AboutExcerpt";
 import Categories from "@/components/home/Categories";
@@ -56,12 +56,16 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 2 }}
             className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto"
           >
-            <button className="px-8 py-4 bg-[#D4AF37] text-black font-semibold tracking-wider uppercase text-xs sm:text-sm hover:bg-ivory transition-colors w-full sm:w-auto">
-              Explore Collections
-            </button>
-            <button className="px-8 py-4 border border-[#D4AF37] text-[#D4AF37] font-semibold tracking-wider uppercase text-xs sm:text-sm hover:bg-[#D4AF37] hover:text-black transition-colors w-full sm:w-auto">
-              Book a Fitting
-            </button>
+            <Link href="/shop" className="w-full sm:w-auto">
+              <button className="px-8 py-4 bg-[#D4AF37] text-black font-semibold tracking-wider uppercase text-xs sm:text-sm hover:bg-ivory transition-colors w-full">
+                Explore Our Shop
+              </button>
+            </Link>
+            <Link href="/contact" className="w-full sm:w-auto">
+              <button className="px-8 py-4 border border-[#D4AF37] text-[#D4AF37] font-semibold tracking-wider uppercase text-xs sm:text-sm hover:bg-[#D4AF37] hover:text-black transition-colors w-full">
+                Book a Fitting
+              </button>
+            </Link>
           </motion.div>
         </div>
       </section>

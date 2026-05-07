@@ -1,16 +1,15 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const PRODUCTS = [
-  { id: 1, name: "The Executive Navy Two-Piece", price: 250000, category: "Corporate", image: "/product_navy_suit_1778045268960.png" },
-  { id: 2, name: "Royal Midnight Agbada", price: 450000, category: "Agbada", image: "/category_agbada_1778044962710.png" },
-  { id: 3, name: "Ivory Silk Kaftan", price: 150000, category: "Kaftans", image: "/category_kaftans_1778044980700.png" },
-  { id: 4, name: "Charcoal Pinstripe Suit", price: 280000, category: "Suits", image: "/category_corporate_1778044937824.png" },
-  { id: 5, name: "Emerald Green Velvet Tuxedo", price: 320000, category: "Corporate", image: "/category_suits_1778045024075.png" },
+  { id: 1, name: "The Executive Navy Two-Piece", price: 250000, category: "Corporate", image: "/product_navy_suit_1778045268960.png", slug: "executive-navy-suit" },
+  { id: 2, name: "Royal Midnight Agbada", price: 450000, category: "Agbada", image: "/category_agbada_1778044962710.png", slug: "royal-midnight-agbada" },
+  { id: 3, name: "Ivory Silk Kaftan", price: 150000, category: "Kaftans", image: "/category_kaftans_1778044980700.png", slug: "ivory-silk-kaftan" },
+  { id: 4, name: "Charcoal Pinstripe Suit", price: 280000, category: "Suits", image: "/category_corporate_1778044937824.png", slug: "charcoal-pinstripe-corporate" },
+  { id: 5, name: "Emerald Green Velvet Tuxedo", price: 320000, category: "Corporate", image: "/category_suits_1778045024075.png", slug: "" },
 ];
 
 export default function ProductCarousel() {
@@ -53,7 +52,11 @@ export default function ProductCarousel() {
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {PRODUCTS.map((product) => (
-          <div key={product.id} className="min-w-[280px] md:min-w-[350px] snap-start group cursor-pointer">
+          <Link 
+            key={product.id} 
+            href={product.slug ? `/shop/${product.slug}` : `/shop?category=${product.category}`}
+            className="min-w-[280px] md:min-w-[350px] snap-start group cursor-pointer"
+          >
             <div className="relative h-[450px] mb-6 overflow-hidden bg-warm-gray dark:bg-black">
               <img 
                 src={product.image} 
@@ -62,7 +65,7 @@ export default function ProductCarousel() {
               />
               <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-black/80 backdrop-blur-sm">
                 <button className="w-full py-3 bg-gold text-black font-semibold uppercase tracking-wider text-xs hover:bg-ivory transition-colors">
-                  Quick View
+                  View Details
                 </button>
               </div>
             </div>
@@ -71,10 +74,10 @@ export default function ProductCarousel() {
               <h3 className="text-lg font-serif mb-2">{product.name}</h3>
               <p className="text-gold font-medium">₦{product.price.toLocaleString()}</p>
             </div>
-          </div>
+          </Link>
         ))}
         <div className="min-w-[280px] md:min-w-[350px] snap-start flex items-center justify-center border border-dashed border-gray-300 dark:border-gray-600 h-[450px]">
-           <Link href="/collections" className="text-center group">
+           <Link href="/shop" className="text-center group">
               <span className="block text-2xl font-serif text-gray-400 group-hover:text-gold transition-colors mb-2">View All</span>
               <span className="block w-8 h-px bg-gray-400 group-hover:bg-gold transition-colors mx-auto group-hover:w-16"></span>
            </Link>

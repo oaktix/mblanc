@@ -21,7 +21,7 @@ export default async function ShopPage({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
           <div>
-            <h1 className="text-4xl md:text-5xl font-serif text-charcoal dark:text-ivory mb-4">The Collection</h1>
+            <h1 className="text-4xl md:text-5xl font-serif text-charcoal dark:text-ivory mb-4">Our Shop</h1>
             <p className="text-gray-500 font-light italic">Refined garments for the modern gentleman.</p>
           </div>
           
