@@ -14,14 +14,16 @@ export default withAuth(
 
     // 2. Admin & Staff Authorization Logic
     const isAdminRoute = pathname.startsWith("/admin");
-    if (isAdminRoute) {
+    const isAdminLogin = pathname === "/admin/login";
+
+    if (isAdminRoute && !isAdminLogin) {
       const userRole = token?.role ? String(token.role).toUpperCase() : null;
       const hasAccess = isAuth && (userRole === "ADMIN" || userRole === "STAFF");
       
       console.log(`>>> [MIDDLEWARE] Admin Route Access: ${pathname} | User: ${token?.email} | Role: ${token?.role} | Access: ${hasAccess}`);
 
       if (!hasAccess) {
-        return NextResponse.redirect(new URL("/auth/login", req.url));
+        return NextResponse.redirect(new URL("/admin/login", req.url));
       }
     }
 
