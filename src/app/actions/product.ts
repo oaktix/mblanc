@@ -49,11 +49,57 @@ export async function createProduct(formData: FormData) {
   redirect("/admin/products");
 }
 
+export async function updateProduct(id: string, formData: FormData) {
+  const name = formData.get("name") as string;
+  const category = formData.get("category") as string;
+  const basePrice = parseFloat(formData.get("basePrice") as string);
+  const sku = formData.get("sku") as string;
+  const description = formData.get("description") as string;
+  const status = formData.get("status") as string;
+  const imageUrls = JSON.parse(formData.get("images") as string || "[]");
+  const variations = JSON.parse(formData.get("variations") as string || "[]");
+  const slug = name.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
+
+  try {
+    // Delete existing variations and recreate (simplest correct approach)
+    await prisma.variation.deleteMany({ where: { productId: id } });
+
+    await prisma.product.update({
+      where: { id },
+      data: {
+        name,
+        slug,
+        category,
+        basePrice,
+        sku,
+        description,
+        status,
+        stock: parseInt(formData.get("stock") as string || "0"),
+        images: imageUrls,
+        variations: {
+          create: variations.map((v: any) => ({
+            size: v.size || null,
+            color: v.color || null,
+            price: parseFloat(v.price.toString()),
+            sku: v.sku,
+            stock: parseInt(v.stock.toString()),
+          })),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error updating product:", error);
+    return { error: "Failed to update product" };
+  }
+
+  revalidatePath("/admin/products");
+  revalidatePath("/shop");
+  redirect("/admin/products");
+}
+
 export async function deleteProduct(id: string) {
   try {
-    await prisma.product.delete({
-      where: { id },
-    });
+    await prisma.product.delete({ where: { id } });
     revalidatePath("/admin/products");
     revalidatePath("/shop");
     return { success: true };

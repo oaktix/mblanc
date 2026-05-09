@@ -1,6 +1,14 @@
-"use client";
-
+import { Metadata } from "next";
 import dynamic from "next/dynamic";
+
+export const metadata: Metadata = {
+  title: "Checkout | Finalize Your Bespoke Order",
+  description: "Securely complete your MBlanc Bespoke order. Luxury tailoring delivered to your doorstep.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 const CheckoutForm = dynamic(() => import("@/components/checkout/CheckoutForm"), {
   ssr: false,

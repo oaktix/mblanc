@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | MBlanc Bespoke",
-  description: "Terms of Service for MBlanc Bespoke luxury menswear.",
+  title: "Terms of Service",
+  description: "Read our terms of service regarding bespoke tailoring orders, alterations, and payments.",
 };
 
 export default function TermsPage() {

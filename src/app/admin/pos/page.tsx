@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, ShoppingCart, User, CreditCard, Banknote, Trash2, Download, CheckCircle2 } from "lucide-react";
+import { Search, ShoppingCart, User, CreditCard, Banknote, Trash2, Download, CheckCircle2, Printer } from "lucide-react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { POSReceipt } from "@/components/admin/POSReceipt";
+import POSPrintReceipt from "@/components/admin/POSPrintReceipt";
 import AdminShell from "@/components/admin/AdminShell";
 
 export default function POSPage() {
@@ -94,14 +95,22 @@ export default function POSPage() {
           <h2 className="text-3xl font-serif mb-4">Sale Completed</h2>
           <p className="text-gray-500 mb-10">The transaction has been recorded successfully.</p>
           
-          <div className="flex gap-4">
+          <div className="flex flex-wrap justify-center gap-4">
+             <button 
+               onClick={() => window.print()}
+               className="px-8 py-4 bg-charcoal text-white font-bold rounded-lg flex items-center gap-2 hover:bg-black transition-all"
+             >
+               <Printer size={18} /> Direct Print
+             </button>
+
              <PDFDownloadLink 
                document={<POSReceipt {...completedOrder} />} 
                fileName={`receipt-${completedOrder.orderId}.pdf`}
                className="px-8 py-4 bg-burgundy text-white font-bold rounded-lg flex items-center gap-2 hover:bg-black transition-all"
              >
-               {({ loading }) => (loading ? "Generating..." : <><Download size={18} /> Download Receipt</>)}
+               {({ loading }) => (loading ? "Generating PDF..." : <><Download size={18} /> Download PDF</>)}
              </PDFDownloadLink>
+             
              <button 
                onClick={() => setCompletedOrder(null)}
                className="px-8 py-4 border border-gray-200 dark:border-gray-800 rounded-lg font-bold hover:bg-gray-50 transition-all"
@@ -109,6 +118,9 @@ export default function POSPage() {
                New Transaction
              </button>
           </div>
+
+          {/* Hidden Printable Receipt */}
+          <POSPrintReceipt {...completedOrder} />
         </div>
       </AdminShell>
     );

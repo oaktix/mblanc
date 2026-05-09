@@ -1,6 +1,29 @@
 import prisma from "@/lib/prisma";
 import Image from "next/image";
 import Link from "next/link";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}): Promise<Metadata> {
+  const { category } = await searchParams;
+  const title = category ? `${category} Collection` : "Our Shop";
+  const description = category 
+    ? `Explore our exclusive ${category} collection at MBlanc Bespoke. Handcrafted luxury garments for the discerning gentleman.` 
+    : "Browse the full MBlanc Bespoke collection. Luxury Agbadas, corporate suits, and traditional kaftans tailored to perfection.";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | MBlanc Bespoke`,
+      description,
+      images: ["/images/shop.jpg"],
+    },
+  };
+}
 
 export default async function ShopPage({
   searchParams,

@@ -9,18 +9,28 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  resetToken    String?   @unique
+  id               String    @id @default(cuid())
+  name             String?
+  email            String?   @unique
+  phone            String?
+  emailVerified    DateTime?
+  image            String?
+  password         String?
+  resetToken       String?   @unique
   resetTokenExpiry DateTime?
-  role          Role      @default(CUSTOMER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  orders        Order[]
+  role             Role      @default(CUSTOMER)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  orders           Order[]
+  couponUsages     CouponUsage[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  image     String?
+  createdAt DateTime @default(now())
 }
 
 model Product {
@@ -38,6 +48,7 @@ model Product {
   images      String[]
   orderItems  OrderItem[]
   variations  Variation[]
+  coupons     Coupon[]
 }
 
 model Variation {
@@ -58,6 +69,8 @@ model Order {
   id              String      @id @default(cuid())
   userId          String?
   total           Float
+  discount        Float?
+  couponCode      String?
   status          OrderStatus @default(PENDING)
   shippingDetails Json?
   paymentStatus   String      @default("PENDING")
@@ -78,6 +91,33 @@ model OrderItem {
   order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product    @relation(fields: [productId], references: [id])
   variation   Variation? @relation(fields: [variationId], references: [id])
+}
+
+model Coupon {
+  id          String       @id @default(cuid())
+  code        String       @unique
+  type        CouponType
+  value       Float
+  scope       CouponScope  @default(SITEWIDE)
+  minPurchase Float?
+  maxPurchase Float?
+  maxUsages   Int?
+  usageCount  Int          @default(0)
+  expiresAt   DateTime?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  products    Product[]
+  usages      CouponUsage[]
+}
+
+model CouponUsage {
+  id        String   @id @default(cuid())
+  couponId  String
+  userId    String
+  orderId   String
+  createdAt DateTime @default(now())
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model SiteSettings {
@@ -101,4 +141,14 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FLAT
+}
+
+enum CouponScope {
+  SITEWIDE
+  PRODUCT
 }

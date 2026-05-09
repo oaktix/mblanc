@@ -4,6 +4,7 @@ import { Plus, Search, Edit2, Trash2, ExternalLink } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { Suspense } from "react";
 import AdminShell from "@/components/admin/AdminShell";
+import DeleteProductButton from "@/components/admin/DeleteProductButton";
 
 export const unstable_instant = { prefetch: "static" };
 
@@ -16,13 +17,21 @@ export default function AdminProductsPage() {
           <h1 className="text-3xl font-serif text-charcoal dark:text-ivory">Products Inventory</h1>
           <p className="text-gray-500 font-light mt-1">Manage your boutique categories and inventory.</p>
         </div>
-        <Link 
-          href="/admin/products/new" 
-          className="px-6 py-2 bg-burgundy text-white font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-black transition-all"
-        >
-          <Plus size={18} />
-          Add New Product
-        </Link>
+        <div className="flex gap-3">
+          <Link
+            href="/admin/categories"
+            className="px-5 py-2 border border-gold text-gold font-semibold rounded-lg text-sm hover:bg-gold hover:text-black transition-all"
+          >
+            Manage Categories
+          </Link>
+          <Link 
+            href="/admin/products/new" 
+            className="px-6 py-2 bg-burgundy text-white font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-black transition-all"
+          >
+            <Plus size={18} />
+            Add New Product
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-charcoal rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
@@ -37,7 +46,6 @@ export default function AdminProductsPage() {
           </div>
           <div className="flex gap-4">
              <a href="/api/admin/export?type=products" download className="text-sm font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors">Export CSV</a>
-
           </div>
         </div>
 
@@ -83,8 +91,14 @@ async function ProductsList() {
         <tr key={product.id} className="hover:bg-gray-50/50 dark:hover:bg-black/20 transition-colors">
           <td className="px-6 py-4">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-14 bg-cream dark:bg-black rounded-md flex-shrink-0 flex items-center justify-center border border-gold/10">
-                <span className="text-[10px] font-serif italic text-gold/50">Img</span>
+              <div className="w-12 h-14 bg-cream dark:bg-black rounded-md flex-shrink-0 overflow-hidden border border-gold/10">
+                {product.images?.[0] ? (
+                  <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-[10px] font-serif italic text-gold/50">Img</span>
+                  </div>
+                )}
               </div>
               <div>
                 <p className="text-sm font-semibold text-charcoal dark:text-ivory">{product.name}</p>
@@ -111,18 +125,10 @@ async function ProductsList() {
               <Link href={`/shop/${product.slug}`} target="_blank" className="p-2 text-gray-400 hover:text-gold transition-colors">
                 <ExternalLink size={16} />
               </Link>
-              <button className="p-2 text-gray-400 hover:text-blue-500 transition-colors">
+              <Link href={`/admin/products/${product.id}`} className="p-2 text-gray-400 hover:text-blue-500 transition-colors" title="Edit Product">
                 <Edit2 size={16} />
-              </button>
-              <form action={async () => {
-                "use server";
-                await prisma.product.delete({ where: { id: product.id } });
-                revalidatePath("/admin/products");
-              }}>
-                <button type="submit" className="p-2 text-gray-400 hover:text-burgundy transition-colors" title="Delete Product">
-                  <Trash2 size={16} />
-                </button>
-              </form>
+              </Link>
+              <DeleteProductButton productId={product.id} productName={product.name} />
             </div>
           </td>
         </tr>

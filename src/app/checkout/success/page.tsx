@@ -1,5 +1,14 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Order Successful",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function CheckoutSuccessPage() {
   return (

@@ -40,7 +40,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               {session?.user?.name?.[0] || "A"}
             </div>
             <button 
-              onClick={() => signOut({ callbackUrl: "/admin" })}
+              onClick={() => signOut({ callbackUrl: "/" })}
               className="p-2 text-gray-400 hover:text-burgundy hover:bg-burgundy/5 rounded-lg transition-all"
               title="Sign Out"
             >

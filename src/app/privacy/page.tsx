@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | MBlanc Bespoke",
-  description: "Privacy policy for MBlanc Bespoke luxury menswear.",
+  title: "Privacy Policy",
+  description: "Learn how MBlanc Bespoke protects and manages your personal data and bespoke measurements.",
 };
 
 export default function PrivacyPolicyPage() {
