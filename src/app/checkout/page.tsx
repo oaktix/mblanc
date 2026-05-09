@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
+import CheckoutPageClient from "@/components/checkout/CheckoutPageClient";
 
 export const metadata: Metadata = {
   title: "Checkout | Finalize Your Bespoke Order",
@@ -10,10 +10,6 @@ export const metadata: Metadata = {
   },
 };
 
-const CheckoutForm = dynamic(() => import("@/components/checkout/CheckoutForm"), {
-  ssr: false,
-});
-
 export default function CheckoutPage() {
   return (
     <main className="pt-24 min-h-screen bg-white dark:bg-black">
@@ -22,7 +18,7 @@ export default function CheckoutPage() {
           <h1 className="text-4xl md:text-5xl font-serif text-charcoal dark:text-ivory mb-4">Checkout</h1>
           <p className="text-gray-500 font-light italic">Complete your order to begin the bespoke journey.</p>
         </div>
-        <CheckoutForm />
+        <CheckoutPageClient />
       </div>
     </main>
   );
