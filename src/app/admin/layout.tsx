@@ -21,6 +21,6 @@ async function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // Authenticated: full sidebar shell
-  return <AdminShell>{children}</AdminShell>;
+  // Authenticated: return children directly so each page can be fully standalone
+  return <>{children}</>;
 }

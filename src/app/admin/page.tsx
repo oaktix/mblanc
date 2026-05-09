@@ -3,15 +3,18 @@ import { authOptions } from "@/lib/auth";
 import AdminLoginForm from "@/components/admin/AdminLoginForm";
 import prisma from "@/lib/prisma";
 import { TrendingUp, ShoppingBag, Users, Package2, ArrowUpRight } from "lucide-react";
+import AdminShell from "@/components/admin/AdminShell";
 import { Suspense } from "react";
 
 export const unstable_instant = { prefetch: "static" };
 
 export default function AdminPage() {
   return (
-    <Suspense fallback={<div className="animate-pulse h-screen bg-gray-100 dark:bg-black/20 rounded-xl"></div>}>
-      <DashboardContent />
-    </Suspense>
+    <AdminShell>
+      <Suspense fallback={<div className="animate-pulse h-screen bg-gray-100 dark:bg-black/20 rounded-xl"></div>}>
+        <DashboardContent />
+      </Suspense>
+    </AdminShell>
   );
 }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Settings as SettingsIcon, Bell, Shield, Palette, Globe, CreditCard, Save, ImagePlus, Loader2 } from "lucide-react";
 import { updateSiteSettings, getSiteSettings } from "@/app/actions/settings";
+import AdminShell from "@/components/admin/AdminShell";
 
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -59,7 +60,8 @@ export default function AdminSettingsPage() {
   if (loading) return <div className="p-20 text-center font-serif italic text-gold">Loading Atelier Config...</div>;
 
   return (
-    <div className="max-w-4xl space-y-10 pb-20">
+    <AdminShell>
+      <div className="max-w-4xl space-y-10 pb-20">
       <div className="mb-10 flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-serif text-charcoal dark:text-ivory">Atelier Settings</h1>
@@ -171,6 +173,7 @@ export default function AdminSettingsPage() {
             </div>
          </div>
       </div>
-    </div>
+      </div>
+    </AdminShell>
   );
 }

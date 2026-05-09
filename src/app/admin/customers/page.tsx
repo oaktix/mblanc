@@ -2,13 +2,15 @@ import prisma from "@/lib/prisma";
 import { Search, Mail, Phone, Calendar, ShoppingBag } from "lucide-react";
 import { Suspense } from "react";
 import EditUserModal from "@/components/admin/EditUserModal";
+import AdminShell from "@/components/admin/AdminShell";
 
 export const unstable_instant = { prefetch: "static" };
 
 export default function AdminCustomersPage() {
   return (
-    <div>
-      <div className="mb-10">
+    <AdminShell>
+      <div>
+        <div className="mb-10">
         <h1 className="text-3xl font-serif text-charcoal dark:text-ivory">Client Directory</h1>
         <p className="text-gray-500 font-light mt-1">Manage your relationship with the distinguished clientele of MBlanc.</p>
       </div>
@@ -51,7 +53,8 @@ export default function AdminCustomersPage() {
           </table>
         </div>
       </div>
-    </div>
+      </div>
+    </AdminShell>
   );
 }
 

@@ -2,12 +2,14 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { Search, Eye, Filter, Download } from "lucide-react";
 import { Suspense } from "react";
+import AdminShell from "@/components/admin/AdminShell";
 
 export const unstable_instant = { prefetch: "static" };
 
 export default function AdminOrdersPage() {
   return (
-    <div>
+    <AdminShell>
+      <div>
       <div className="flex justify-between items-center mb-10">
         <div>
           <h1 className="text-3xl font-serif text-charcoal dark:text-ivory">Order Management</h1>
@@ -64,7 +66,8 @@ export default function AdminOrdersPage() {
           </table>
         </div>
       </div>
-    </div>
+      </div>
+    </AdminShell>
   );
 }
 

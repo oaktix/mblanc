@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Plus, UserCheck, Shield, Mail, Trash2, Edit } from "lucide-react";
 import { deleteStaffAccount } from "@/app/actions/staff";
 import EditUserModal from "@/components/admin/EditUserModal";
+import AdminShell from "@/components/admin/AdminShell";
 
 export default async function StaffPage() {
   const session = await getServerSession(authOptions);
@@ -21,8 +22,9 @@ export default async function StaffPage() {
   });
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-10">
+    <AdminShell>
+      <div>
+        <div className="flex justify-between items-center mb-10">
         <div>
           <h1 className="text-3xl font-serif text-charcoal dark:text-ivory">Staff Portal</h1>
           <p className="text-gray-500 font-light mt-1">Manage atelier access and team capabilities.</p>
@@ -91,6 +93,7 @@ export default async function StaffPage() {
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </AdminShell>
   );
 }
