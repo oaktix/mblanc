@@ -54,11 +54,13 @@ export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           return (
-            <Link 
+            <button 
               key={item.href} 
-              href={item.href}
-              onClick={onClose}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              onClick={() => {
+                if (onClose) onClose();
+                window.location.href = item.href; // Force hard navigation to clear any suspense hangs
+              }}
+              className={`flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
                 isActive 
                   ? "bg-gold text-black" 
                   : "text-gray-400 hover:bg-white/5 hover:text-white"
@@ -66,7 +68,7 @@ export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
             >
               <Icon size={20} />
               <span className="text-sm font-medium">{item.name}</span>
-            </Link>
+            </button>
           );
         })}
       </nav>

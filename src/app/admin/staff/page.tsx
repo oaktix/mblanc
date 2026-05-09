@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, UserCheck, Shield, Mail, Trash2, Edit } from "lucide-react";
 import { deleteStaffAccount } from "@/app/actions/staff";
+import EditUserModal from "@/components/admin/EditUserModal";
 
 export default async function StaffPage() {
   const session = await getServerSession(authOptions);
@@ -57,13 +58,14 @@ export default async function StaffPage() {
 
             <div className="pt-6 border-t border-gray-50 dark:border-gray-900 flex justify-between items-center">
                <div className="flex gap-4">
-                  <Link 
-                    href={`/admin/staff/${member.id}`}
-                    className="p-2 bg-gray-50 dark:bg-black text-gray-500 hover:text-gold transition-colors rounded"
-                    title="Edit Member"
-                  >
-                     <Edit size={16} />
-                  </Link>
+                  <EditUserModal 
+                    user={{
+                      id: member.id,
+                      name: member.name,
+                      email: member.email,
+                      role: member.role,
+                    }}
+                  />
                   <form action={async () => {
                     "use server";
                     await deleteStaffAccount(member.id);
