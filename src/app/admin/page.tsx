@@ -1,3 +1,4 @@
+import prisma from "@/lib/prisma";
 import { 
   TrendingUp, 
   ShoppingBag, 
@@ -6,14 +7,23 @@ import {
   ArrowUpRight
 } from "lucide-react";
 
-const STATS = [
-  { name: "Total Revenue", value: "₦2,450,000", icon: TrendingUp, change: "+12.5%", color: "text-green-600" },
-  { name: "Total Orders", value: "48", icon: ShoppingBag, change: "+18%", color: "text-blue-600" },
-  { name: "Active Customers", value: "124", icon: Users, change: "+5.2%", color: "text-purple-600" },
-  { name: "Total Products", value: "12", icon: Package2, change: "0%", color: "text-amber-600" },
-];
+export default async function AdminDashboard() {
+  const [totalRevenue, totalOrders, totalCustomers, totalProducts] = await Promise.all([
+    prisma.order.aggregate({
+      _sum: { total: true },
+      where: { paymentStatus: "SUCCESS" }
+    }),
+    prisma.order.count({ where: { paymentStatus: "SUCCESS" } }),
+    prisma.user.count({ where: { role: "CUSTOMER" } }),
+    prisma.product.count()
+  ]);
 
-export default function AdminDashboard() {
+  const STATS = [
+    { name: "Total Revenue", value: `₦${(totalRevenue._sum.total || 0).toLocaleString()}`, icon: TrendingUp, change: "+0%", color: "text-green-600" },
+    { name: "Total Orders", value: totalOrders.toString(), icon: ShoppingBag, change: "+0%", color: "text-blue-600" },
+    { name: "Active Customers", value: totalCustomers.toString(), icon: Users, change: "+0%", color: "text-purple-600" },
+    { name: "Total Products", value: totalProducts.toString(), icon: Package2, change: "0%", color: "text-amber-600" },
+  ];
   return (
     <div>
       <div className="flex justify-between items-center mb-10">

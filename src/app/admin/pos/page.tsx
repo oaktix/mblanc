@@ -49,20 +49,40 @@ export default function POSPage() {
     if (cart.length === 0 || !customerName) return;
     
     setIsProcessing(true);
-    // Simulate API call to record sale
-    setTimeout(() => {
-      const orderData = {
-        orderId: Math.random().toString(36).substr(2, 9),
+    
+    try {
+      const response = await fetch('/api/admin/pos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart,
+          total,
+          customerName,
+          paymentMethod
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to record sale");
+      }
+
+      const orderData = await response.json();
+      
+      setCompletedOrder({
+        orderId: orderData.id,
         customerName,
         items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.basePrice })),
         total,
         paymentMethod
-      };
-      setCompletedOrder(orderData);
-      setIsProcessing(false);
+      });
+      
       setCart([]);
       setCustomerName("");
-    }, 1500);
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (completedOrder) {

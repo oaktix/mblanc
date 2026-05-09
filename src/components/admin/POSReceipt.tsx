@@ -5,7 +5,7 @@ import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/rendere
 // Registered fonts for luxury look
 Font.register({
   family: "Playfair Display",
-  src: "https://fonts.gstatic.com/s/playfairdisplay/v30/nuFvD7K6EcnS866G5pT2X08LxQ.ttf",
+  src: "https://github.com/google/fonts/raw/main/ofl/playfairdisplay/static/PlayfairDisplay-Regular.ttf",
 });
 
 const styles = StyleSheet.create({

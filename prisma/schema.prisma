@@ -8,20 +8,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum Role {
-  ADMIN
-  STAFF
-  CUSTOMER
-}
-
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-}
-
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -40,64 +26,77 @@ model Product {
   name        String
   slug        String      @unique
   category    String
-  description String      @db.Text
+  description String
   basePrice   Float
   sku         String      @unique
   stock       Int         @default(0)
-  status      String      @default("DRAFT") // DRAFT, PUBLISHED, OUT_OF_STOCK
+  status      String      @default("DRAFT")
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   images      String[]
-  variations  Variation[]
   orderItems  OrderItem[]
+  variations  Variation[]
 }
 
 model Variation {
-  id        String      @id @default(cuid())
-  productId String
-  product   Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  size      String?
-  color     String?
-  fabric    String?
-  sku       String      @unique
-  price     Float
-  stock     Int         @default(0)
-  images    String[]
+  id         String      @id @default(cuid())
+  productId  String
+  size       String?
+  color      String?
+  fabric     String?
+  sku        String      @unique
+  price      Float
+  stock      Int         @default(0)
+  images     String[]
   orderItems OrderItem[]
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Order {
   id              String      @id @default(cuid())
   userId          String?
-  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   total           Float
   status          OrderStatus @default(PENDING)
   shippingDetails Json?
-  paymentStatus   String      @default("PENDING") // PENDING, SUCCESS, FAILED
+  paymentStatus   String      @default("PENDING")
   paystackRef     String?     @unique
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  user            User?       @relation(fields: [userId], references: [id])
   items           OrderItem[]
 }
 
 model OrderItem {
   id          String     @id @default(cuid())
   orderId     String
-  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId   String
-  product     Product    @relation(fields: [productId], references: [id])
   variationId String?
-  variation   Variation? @relation(fields: [variationId], references: [id])
   quantity    Int
   price       Float
+  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product    @relation(fields: [productId], references: [id])
+  variation   Variation? @relation(fields: [variationId], references: [id])
 }
 
 model SiteSettings {
-  id          String   @id @default("singleton")
-  siteName    String   @default("MBlanc Bespoke")
-  headerLogo  String?
-  footerLogo  String?
+  id           String   @id @default("singleton")
+  siteName     String   @default("MBlanc Bespoke")
+  headerLogo   String?
+  footerLogo   String?
   contactEmail String   @default("hello@mblancfits.com")
-  updatedAt   DateTime @updatedAt
+  updatedAt    DateTime @updatedAt
 }
 
+enum Role {
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
