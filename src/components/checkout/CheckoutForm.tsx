@@ -3,6 +3,7 @@
 import { useCartStore } from "@/store/useCartStore";
 import { useState, useEffect } from "react";
 import { usePaystackPayment } from "react-paystack";
+import { motion } from "framer-motion";
 
 export default function CheckoutForm() {
   const { items, getTotalPrice, clearCart } = useCartStore();
@@ -84,7 +85,12 @@ export default function CheckoutForm() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-16 p-4 md:p-8">
-      <div className="w-full lg:w-2/3">
+      <motion.div 
+        initial={{ opacity: 0, x: -30 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8 }}
+        className="w-full lg:w-2/3"
+      >
         <h2 className="text-2xl font-serif mb-8 uppercase tracking-widest text-burgundy">Shipping Details</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -142,9 +148,14 @@ export default function CheckoutForm() {
             {loading ? "Processing..." : `Pay ₦${getTotalPrice().toLocaleString()}`}
           </button>
         </form>
-      </div>
+      </motion.div>
 
-      <div className="w-full lg:w-1/3">
+      <motion.div 
+        initial={{ opacity: 0, x: 30 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        className="w-full lg:w-1/3"
+      >
         <div className="bg-cream dark:bg-charcoal p-8 border border-gold/10 rounded">
           <h2 className="text-xl font-serif mb-6 uppercase tracking-widest border-b border-gold/20 pb-4 text-burgundy">Order Summary</h2>
           <div className="space-y-4 mb-8">
@@ -163,7 +174,7 @@ export default function CheckoutForm() {
             <span className="text-burgundy">₦{getTotalPrice().toLocaleString()}</span>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

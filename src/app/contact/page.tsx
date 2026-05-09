@@ -27,20 +27,30 @@ export default function ContactPage() {
   };
 
   return (
-    <main className="min-h-screen bg-ivory dark:bg-black pt-32 pb-24">
-      <div className="max-w-7xl mx-auto px-6">
-        
-        {/* Header */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-20"
-        >
-          <span className="text-gold uppercase tracking-[0.4em] text-xs mb-4 block">Concierge Services</span>
-          <h1 className="text-4xl md:text-6xl font-serif text-charcoal dark:text-ivory mb-6">Begin Your Bespoke Journey</h1>
-          <div className="h-1 w-20 bg-gold mx-auto" />
-        </motion.div>
+    <main className="min-h-screen bg-ivory dark:bg-black pb-24">
+      {/* Hero Section */}
+      <section className="relative h-[40vh] md:h-[50vh] flex items-center justify-center bg-black overflow-hidden mb-20">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/images/perfection.jpg" 
+            alt="Perfection in Tailoring" 
+            className="w-full h-full object-cover opacity-60"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent mix-blend-multiply"></div>
+        </div>
+        <div className="relative z-20 text-center px-4 mt-20">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <span className="text-gold uppercase tracking-[0.4em] text-xs mb-4 block">Concierge Services</span>
+            <h1 className="text-4xl md:text-6xl font-serif text-ivory mb-6">Begin Your Bespoke Journey</h1>
+            <div className="h-1 w-20 bg-gold mx-auto" />
+          </motion.div>
+        </div>
+      </section>
 
+      <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
           
           {/* Contact Information */}

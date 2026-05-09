@@ -51,9 +51,13 @@ export default async function ShopPage({
             products.map((product) => (
               <Link key={product.id} href={`/shop/${product.slug}`} className="group">
                 <div className="relative h-[400px] bg-warm-gray dark:bg-charcoal mb-4 overflow-hidden border border-gold/10">
-                   <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-sm font-serif italic text-white/50">{product.name}</span>
-                   </div>
+                   {product.images && product.images.length > 0 ? (
+                     <img src={product.images[0]} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                   ) : (
+                     <div className="absolute inset-0 flex items-center justify-center bg-black/5">
+                        <span className="text-sm font-serif italic text-charcoal/30 dark:text-ivory/30">{product.name}</span>
+                     </div>
+                   )}
                    <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-black/80 backdrop-blur-sm">
                       <button className="w-full py-3 bg-gold text-black font-semibold uppercase tracking-wider text-xs">
                         View Details
