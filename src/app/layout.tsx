@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import StoreShell from "@/components/StoreShell";
 import Providers from "@/components/Providers";
+import { Suspense } from "react";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -34,7 +35,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-cream text-charcoal dark:bg-black dark:text-ivory">
         <Providers>
-          <StoreShell>{children}</StoreShell>
+          <StoreShell><Suspense>{children}</Suspense></StoreShell>
         </Providers>
       </body>
     </html>
