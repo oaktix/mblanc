@@ -8,8 +8,10 @@ import Logo from "./Logo";
 
 export default function Footer() {
   const [settings, setSettings] = useState<any>(null);
+  const [year, setYear] = useState(2026);
 
   useEffect(() => {
+    setYear(new Date().getFullYear());
     async function loadSettings() {
       const data = await getSiteSettings();
       setSettings(data);
@@ -76,7 +78,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
-          <p>&copy; {new Date().getFullYear()} MBlanc Bespoke. All rights reserved.</p>
+          <p>&copy; {year} MBlanc Bespoke. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0 font-medium">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
