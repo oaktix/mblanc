@@ -1,65 +1,75 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { NextRequestWithAuth } from "next-auth/middleware";
+
+// Pages that must be reachable without a session
+const PUBLIC_ADMIN_PATHS = [
+  "/admin",
+  "/admin/login",
+  "/admin/forgot-password",
+  "/admin/reset-password",
+];
 
 export default withAuth(
-  function middleware(req) {
+  function middleware(req: NextRequestWithAuth) {
     const token = req.nextauth.token;
     const isAuth = !!token;
     const { pathname } = req.nextUrl;
 
-    // 1. Explicitly allow the webhook to pass through without any checks
+    // Forward pathname so root layout can detect admin routes
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-pathname", pathname);
+    const withPathname = NextResponse.next({ request: { headers: requestHeaders } });
+
+    // Always allow webhooks
     if (pathname.startsWith("/api/webhooks/paystack")) {
-      return NextResponse.next();
+      return withPathname;
     }
 
-    // 2. Admin & Staff Authorization Logic
-    const isAdminRoute = pathname.startsWith("/admin");
-    const isAdminLogin = pathname === "/admin/login";
+    const isPublicAdminPath = PUBLIC_ADMIN_PATHS.includes(pathname);
 
-    if (isAdminLogin && isAuth) {
+    // If authenticated user hits /admin (login form), send them to dashboard
+    if (pathname === "/admin" && isAuth) {
       const userRole = token?.role ? String(token.role).toUpperCase() : null;
       if (userRole === "ADMIN" || userRole === "STAFF") {
-        return NextResponse.redirect(new URL("/admin", req.url));
+        // Already on dashboard — let through (page handles rendering)
+        return NextResponse.next();
       }
     }
 
-    if (isAdminRoute && !isAdminLogin) {
+    // Protect non-public admin routes
+    if (pathname.startsWith("/admin") && !isPublicAdminPath) {
       const userRole = token?.role ? String(token.role).toUpperCase() : null;
       const hasAccess = isAuth && (userRole === "ADMIN" || userRole === "STAFF");
-      
-      console.log(`>>> [MIDDLEWARE] Admin Route Access: ${pathname} | User: ${token?.email} | Role: ${token?.role} | Access: ${hasAccess}`);
+
+      console.log(`>>> [MIDDLEWARE] Admin Route: ${pathname} | Role: ${token?.role} | Access: ${hasAccess}`);
 
       if (!hasAccess) {
-        return NextResponse.redirect(new URL("/admin/login", req.url));
+        return NextResponse.redirect(new URL("/admin", req.url));
       }
 
-      const isAdminOnlyRoute = pathname.startsWith("/admin/staff") || pathname.startsWith("/admin/settings");
-      console.log(`>>> [MIDDLEWARE] Path: ${pathname} | Role: ${userRole} | AdminOnly: ${isAdminOnlyRoute}`);
-      
+      // Admin-only sub-routes
+      const isAdminOnlyRoute =
+        pathname.startsWith("/admin/staff") || pathname.startsWith("/admin/settings");
+
       if (isAdminOnlyRoute && userRole !== "ADMIN") {
-        console.log(`>>> [MIDDLEWARE] ACCESS DENIED: ${userRole} attempted to access ADMIN-only route ${pathname}`);
+        console.log(`>>> [MIDDLEWARE] ACCESS DENIED: ${userRole} attempted ${pathname}`);
         return NextResponse.redirect(new URL("/admin", req.url));
       }
     }
 
-    return NextResponse.next();
+    return withPathname;
   },
   {
     callbacks: {
-      // This logic ensures that if the route is matched in the config below, 
-      // the user must be authorized (logged in) EXCEPT if we handle it in the function above.
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
-        
-        // Allow webhooks
-        if (pathname.startsWith("/api/webhooks/paystack")) {
-          return true;
-        }
-        
-        // Allow the admin login page itself so users can actually log in
-        if (pathname === "/admin/login") {
-          return true;
-        }
+
+        // Always allow webhooks
+        if (pathname.startsWith("/api/webhooks/paystack")) return true;
+
+        // Allow public admin paths (login, forgot/reset password)
+        if (PUBLIC_ADMIN_PATHS.includes(pathname)) return true;
 
         return !!token;
       },
@@ -68,19 +78,10 @@ export default withAuth(
 );
 
 export const config = {
-  /*
-   * Match all request paths except for the ones starting with:
-   * - api (specifically excluding our webhook from protection)
-   * - _next/static (static files)
-   * - _next/image (image optimization files)
-   * - favicon.ico (favicon file)
-   */
   matcher: [
     "/admin",
     "/admin/:path*",
     "/account/:path*",
-    // We add the webhook here just so the 'authorized' callback 
-    // can explicitly grant it permission.
-    "/api/webhooks/paystack/:path*"
+    "/api/webhooks/paystack/:path*",
   ],
 };

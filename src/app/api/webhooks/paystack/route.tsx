@@ -86,7 +86,7 @@ export async function POST(req: Request) {
             // 4. Email & Receipt Logic
             const shipping = order.shippingDetails as any;
             const recipientEmail = shipping?.email || customer.email || order.user?.email;
-            const adminEmail = "hello@mblancfits.com";
+            const adminEmail = "admin@mblancfits.com";
 
             if (recipientEmail) {
                 console.log(">>> [PAYSTACK WEBHOOK] Generating PDF and sending emails...");

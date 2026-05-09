@@ -1,21 +1,23 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import AdminLoginForm from "@/components/admin/AdminLoginForm";
 import prisma from "@/lib/prisma";
-import { 
-  TrendingUp, 
-  ShoppingBag, 
-  Users, 
-  Package2,
-  ArrowUpRight
-} from "lucide-react";
+import { TrendingUp, ShoppingBag, Users, Package2, ArrowUpRight } from "lucide-react";
 
-export default async function AdminDashboard() {
+export default async function AdminPage() {
+  const session = await getServerSession(authOptions);
+  const isAuthenticated =
+    session?.user?.role === "ADMIN" || session?.user?.role === "STAFF";
+
+  if (!isAuthenticated) {
+    return <AdminLoginForm />;
+  }
+
   const [totalRevenue, totalOrders, totalCustomers, totalProducts] = await Promise.all([
-    prisma.order.aggregate({
-      _sum: { total: true },
-      where: { paymentStatus: "SUCCESS" }
-    }),
+    prisma.order.aggregate({ _sum: { total: true }, where: { paymentStatus: "SUCCESS" } }),
     prisma.order.count({ where: { paymentStatus: "SUCCESS" } }),
     prisma.user.count({ where: { role: "CUSTOMER" } }),
-    prisma.product.count()
+    prisma.product.count(),
   ]);
 
   const STATS = [
@@ -24,16 +26,16 @@ export default async function AdminDashboard() {
     { name: "Active Customers", value: totalCustomers.toString(), icon: Users, change: "+0%", color: "text-purple-600" },
     { name: "Total Products", value: totalProducts.toString(), icon: Package2, change: "0%", color: "text-amber-600" },
   ];
+
   return (
     <div>
       <div className="flex justify-between items-center mb-10">
         <div>
           <h1 className="text-3xl font-serif text-charcoal dark:text-ivory">Dashboard Overview</h1>
-          <p className="text-gray-500 font-light mt-1">Monitor your atelier's performance and orders.</p>
+          <p className="text-gray-500 font-light mt-1">Monitor your atelier&apos;s performance and orders.</p>
         </div>
         <button className="px-6 py-2 bg-gold text-black font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-black hover:text-gold transition-all">
-          View Reports
-          <ArrowUpRight size={16} />
+          View Reports <ArrowUpRight size={16} />
         </button>
       </div>
 
@@ -46,9 +48,7 @@ export default async function AdminDashboard() {
                 <div className={`p-3 rounded-lg bg-gray-50 dark:bg-black ${stat.color}`}>
                   <Icon size={24} />
                 </div>
-                <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                  stat.change.startsWith("+") ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
-                }`}>
+                <span className={`text-xs font-bold px-2 py-1 rounded-full ${stat.change.startsWith("+") ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>
                   {stat.change}
                 </span>
               </div>
@@ -59,7 +59,6 @@ export default async function AdminDashboard() {
         })}
       </div>
 
-      {/* Recent Activity Placeholders */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white dark:bg-charcoal p-8 border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm">
           <h2 className="text-xl font-serif mb-6 text-charcoal dark:text-ivory border-b border-gray-50 dark:border-gray-900 pb-4">Recent Orders</h2>
@@ -78,7 +77,6 @@ export default async function AdminDashboard() {
             ))}
           </div>
         </div>
-
         <div className="bg-white dark:bg-charcoal p-8 border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm">
           <h2 className="text-xl font-serif mb-6 text-charcoal dark:text-ivory border-b border-gray-50 dark:border-gray-900 pb-4">Latest Products</h2>
           <div className="space-y-6">
