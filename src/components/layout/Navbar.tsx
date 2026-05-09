@@ -150,7 +150,13 @@ export default function Navbar() {
               className="fixed inset-y-0 left-0 w-[80%] max-w-sm bg-black z-[70] md:hidden p-8 flex flex-col"
             >
               <div className="flex justify-between items-center mb-12">
-                <span className="font-serif text-lg tracking-widest text-gold font-bold">MBLANC</span>
+                <Link href="/" onClick={() => setIsMenuOpen(false)}>
+                  <img 
+                    src={settings?.headerLogo || "/header-logo.png"} 
+                    alt="MBLANC" 
+                    className="h-12 w-auto object-contain brightness-110" 
+                  />
+                </Link>
                 <button onClick={() => setIsMenuOpen(false)} className="text-ivory">
                   <X size={24} />
                 </button>

@@ -17,12 +17,29 @@ export default async function ShopPage({
   const categories = ["Agbada", "Suits", "Kaftans", "Corporate"];
 
   return (
-    <main className="pt-24 min-h-screen bg-cream dark:bg-black">
+    <main className="min-h-screen bg-cream dark:bg-black pb-24">
+      {/* Hero Section */}
+      <section className="relative h-[40vh] md:h-[50vh] flex items-center justify-center bg-black overflow-hidden mb-12">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/images/shop.jpg" 
+            alt="MBlanc Bespoke Shop" 
+            className="w-full h-full object-cover opacity-60"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent mix-blend-multiply"></div>
+        </div>
+        <div className="relative z-20 text-center px-4 mt-16">
+          <span className="text-gold uppercase tracking-[0.4em] text-xs mb-4 block">The Collection</span>
+          <h1 className="text-4xl md:text-6xl font-serif text-ivory mb-6">Our Shop</h1>
+          <div className="h-1 w-20 bg-gold mx-auto" />
+        </div>
+      </section>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
           <div>
-            <h1 className="text-4xl md:text-5xl font-serif text-charcoal dark:text-ivory mb-4">Our Shop</h1>
-            <p className="text-gray-500 font-light italic">Refined garments for the modern gentleman.</p>
+            <h2 className="text-2xl md:text-3xl font-serif text-charcoal dark:text-ivory mb-4">Refined Garments</h2>
+            <p className="text-gray-500 font-light italic">For the modern gentleman.</p>
           </div>
           
           {/* Category Filter */}
@@ -54,9 +71,7 @@ export default async function ShopPage({
                    {product.images && product.images.length > 0 ? (
                      <img src={product.images[0]} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                    ) : (
-                     <div className="absolute inset-0 flex items-center justify-center bg-black/5">
-                        <span className="text-sm font-serif italic text-charcoal/30 dark:text-ivory/30">{product.name}</span>
-                     </div>
+                     <img src="/logo.png" alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-50" />
                    )}
                    <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-black/80 backdrop-blur-sm">
                       <button className="w-full py-3 bg-gold text-black font-semibold uppercase tracking-wider text-xs">

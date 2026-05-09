@@ -84,9 +84,7 @@ export default function ProductDetailPage({
                {product.images?.[0] ? (
                  <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
                ) : (
-                 <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xl font-serif italic text-charcoal/20 dark:text-white/20">{product.name}</span>
-                 </div>
+                 <img src="/logo.png" alt={product.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 opacity-50" />
                )}
             </div>
             <div className="grid grid-cols-4 gap-4 mt-4">

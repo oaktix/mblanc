@@ -13,6 +13,7 @@ export default function CheckoutForm() {
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // 1. Paystack Configuration
   const config = {
@@ -140,10 +141,23 @@ export default function CheckoutForm() {
             />
           </div>
 
+          <div className="flex items-start gap-3 mt-8 mb-6">
+            <input 
+              type="checkbox" 
+              id="terms" 
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-1 w-4 h-4 accent-burgundy"
+            />
+            <label htmlFor="terms" className="text-sm text-gray-500">
+              I have read and agree to the <a href="/terms" target="_blank" className="text-burgundy hover:underline">Terms of Service</a> and <a href="/privacy" target="_blank" className="text-burgundy hover:underline">Privacy Policy</a>.
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
-            className={`w-full py-5 bg-burgundy text-white font-semibold uppercase tracking-[0.2em] text-sm hover:bg-black transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={loading || !acceptedTerms}
+            className={`w-full py-5 bg-burgundy text-white font-semibold uppercase tracking-[0.2em] text-sm transition-colors ${(loading || !acceptedTerms) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black'}`}
           >
             {loading ? "Processing..." : `Pay ₦${getTotalPrice().toLocaleString()}`}
           </button>
