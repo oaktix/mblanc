@@ -8,7 +8,12 @@ import ProductCarousel from "@/components/home/ProductCarousel";
 import InquiryForm from "@/components/home/InquiryForm";
 import CtaBar from "@/components/home/CtaBar";
 
-export default function HomeClient() {
+interface Props {
+  latestProducts: any[];
+  categories: any[];
+}
+
+export default function HomeClient({ latestProducts, categories }: Props) {
   return (
     <main className="flex min-h-screen flex-col">
       {/* Hero Section */}
@@ -85,7 +90,7 @@ export default function HomeClient() {
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.8, delay: 0.1 }}
       >
-        <Categories />
+        <Categories categories={categories} />
       </motion.div>
 
       <motion.div 
@@ -94,7 +99,7 @@ export default function HomeClient() {
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.8, delay: 0.1 }}
       >
-        <ProductCarousel />
+        <ProductCarousel products={latestProducts} />
       </motion.div>
 
       <motion.div 
