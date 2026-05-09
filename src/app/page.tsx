@@ -20,7 +20,7 @@ export default function Home() {
           className="absolute inset-0 z-0"
         >
           <img 
-            src="/atelier_portrait_image_1778044902370.png" 
+            src="/images/hero-agbada.jpg" 
             alt="Hero Background" 
             className="w-full h-full object-cover"
           />

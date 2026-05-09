@@ -61,6 +61,7 @@ export default withAuth(
     return withPathname;
   },
   {
+    secret: process.env.NEXTAUTH_SECRET,
     callbacks: {
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
@@ -74,6 +75,9 @@ export default withAuth(
         return !!token;
       },
     },
+    pages: {
+      signIn: '/admin',
+    }
   }
 );
 

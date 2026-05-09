@@ -10,28 +10,28 @@ const CATEGORIES = [
     icon: Briefcase,
     description: "Power suits and executive wear tailored for the boardroom",
     href: "/shop?category=Corporate",
-    image: "/category_corporate_1778044937824.png"
+    image: "/images/category-corporate.jpg"
   },
   {
     name: "Agbada",
     icon: Crown,
     description: "Regal, flowing traditional wear for ceremonies and celebrations",
     href: "/shop?category=Agbada",
-    image: "/category_agbada_1778044962710.png"
+    image: "/images/category-agbada.jpg"
   },
   {
     name: "Kaftans",
     icon: Sparkles,
     description: "Elegant, comfortable traditional wear for any occasion",
     href: "/shop?category=Kaftans",
-    image: "/category_kaftans_1778044980700.png"
+    image: "/images/category-kaftan.jpg"
   },
   {
     name: "Suits",
     icon: Scissors,
     description: "Classic and contemporary bespoke suits for every gentleman",
     href: "/shop?category=Suits",
-    image: "/category_suits_1778045024075.png"
+    image: "/images/category-suits.jpg"
   },
 ];
 

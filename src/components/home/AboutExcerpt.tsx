@@ -13,7 +13,7 @@ export default function AboutExcerpt() {
             {/* Placeholder for actual image */}
             <div className="absolute inset-0 bg-warm-gray dark:bg-charcoal">
               <img 
-                src="/atelier_portrait_image_1778044902370.png" 
+                src="/images/about-portrait.jpg" 
                 alt="Atelier Portrait" 
                 className="w-full h-full object-cover"
               />

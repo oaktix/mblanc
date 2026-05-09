@@ -26,7 +26,7 @@ export default function AboutPage() {
       <section className="relative h-[50vh] flex items-center justify-center bg-black overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="/category_suits_1778045024075.png" 
+            src="/images/about-hero.jpg" 
             alt="Craftsmanship" 
             className="w-full h-full object-cover opacity-60"
           />
@@ -61,7 +61,7 @@ export default function AboutPage() {
                <div className="absolute inset-0 border border-gold/20 translate-x-4 translate-y-4"></div>
                <div className="absolute inset-0 overflow-hidden">
                   <img 
-                    src="/atelier_portrait_image_1778044902370.png" 
+                    src="/images/about-portrait.jpg" 
                     alt="Atelier Craftsmanship" 
                     className="w-full h-full object-cover"
                   />
