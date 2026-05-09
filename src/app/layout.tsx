@@ -35,7 +35,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-cream text-charcoal dark:bg-black dark:text-ivory">
         <Providers>
-          <StoreShell><Suspense>{children}</Suspense></StoreShell>
+          <Suspense fallback={<div className="min-h-screen bg-black" />}>
+            <StoreShell>{children}</StoreShell>
+          </Suspense>
         </Providers>
       </body>
     </html>
