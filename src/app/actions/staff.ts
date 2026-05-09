@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { Role } from "@prisma/client";
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -27,7 +28,7 @@ export async function createStaffAccount(formData: FormData) {
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
-        role: role as any,
+        role: role as Role,
       },
     });
   } catch (error) {
@@ -51,10 +52,10 @@ export async function updateStaffAccount(id: string, formData: FormData) {
   const role = formData.get("role") as string;
 
   try {
-    const data: any = {
+    const data: { name: string; email: string; role: Role; password?: string } = {
       name,
       email: email.toLowerCase(),
-      role: role as any,
+      role: role as Role,
     };
 
     if (password && password.trim() !== "") {

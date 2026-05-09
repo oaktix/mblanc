@@ -8,7 +8,7 @@ export async function POST(req: Request) {
         const session = await getServerSession(authOptions);
         
         // Ensure only ADMIN or STAFF can use POS
-        if (!session || (session.user as any).role === "CUSTOMER") {
+        if (!session || session.user.role === "CUSTOMER") {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
                     type: "IN-STORE",
                     paymentMethod: paymentMethod 
                 },
-                userId: (session.user as any).id,
+                userId: session.user.id,
                 items: {
                     create: items.map((item: any) => ({
                         productId: item.id,

@@ -69,9 +69,6 @@ export default async function OrderDetailPage({
     notFound();
   }
 
-  // We cast to 'any' to bypass the 'totalAmount' property check
-  const orderData = order as any;
-
   return (
     <div className="p-6">
       <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -84,10 +81,10 @@ export default async function OrderDetailPage({
             Back to Orders
           </Link>
           <h1 className="text-3xl font-serif text-charcoal dark:text-ivory">
-            Order #{orderData.id.slice(-6).toUpperCase()}
+            Order #{order.id.slice(-6).toUpperCase()}
           </h1>
           <p className="text-gray-500 font-light mt-1">
-            Placed on {new Date(orderData.createdAt).toLocaleString()}
+            Placed on {new Date(order.createdAt).toLocaleString()}
           </p>
         </div>
 
@@ -99,7 +96,7 @@ export default async function OrderDetailPage({
 
           <form action={async () => {
             "use server";
-            await updateOrderStatus(orderData.id, "DELIVERED");
+            await updateOrderStatus(order.id, "DELIVERED");
           }}>
             <button type="submit" className="px-6 py-2 bg-burgundy text-white font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-black transition-all">
               <CheckCircle size={18} />
@@ -117,7 +114,7 @@ export default async function OrderDetailPage({
               <h2 className="text-lg font-serif">Order Items</h2>
             </div>
             <div className="divide-y divide-gray-50 dark:divide-gray-900">
-              {orderData.items.map((item: any) => (
+              {order.items.map((item) => (
                 <div key={item.id} className="p-6 flex items-center gap-6">
                   <div className="w-16 h-20 bg-cream dark:bg-black rounded-md flex-shrink-0 border border-gold/10"></div>
                   <div className="flex-1">
@@ -134,7 +131,7 @@ export default async function OrderDetailPage({
             <div className="p-6 bg-gray-50 dark:bg-black/50 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Subtotal</span>
-                <span className="font-medium">₦{orderData.totalAmount?.toLocaleString() ?? "0"}</span>
+                <span className="font-medium">₦{order.total?.toLocaleString() ?? "0"}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Shipping</span>
@@ -142,7 +139,7 @@ export default async function OrderDetailPage({
               </div>
               <div className="flex justify-between text-lg font-serif border-t border-gray-200 dark:border-gray-800 pt-3 mt-3">
                 <span>Total</span>
-                <span className="text-gold font-bold">₦{orderData.totalAmount?.toLocaleString() ?? "0"}</span>
+                <span className="text-gold font-bold">₦{order.total?.toLocaleString() ?? "0"}</span>
               </div>
             </div>
           </div>
@@ -152,8 +149,8 @@ export default async function OrderDetailPage({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-bold">Personal Info</label>
-                <p className="text-sm font-semibold">{orderData.user?.name || "Guest Customer"}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{orderData.user?.email || "No email provided"}</p>
+                <p className="text-sm font-semibold">{order.user?.name || "Guest Customer"}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{order.user?.email || "No email provided"}</p>
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-bold">Shipping Address</label>
@@ -185,7 +182,7 @@ export default async function OrderDetailPage({
               </div>
 
               <div className="flex gap-4 relative z-10">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${["PROCESSING", "SHIPPED", "DELIVERED"].includes(orderData.status) ? "bg-gold text-black" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${["PROCESSING", "SHIPPED", "DELIVERED"].includes(order.status) ? "bg-gold text-black" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>
                   <Truck size={14} />
                 </div>
                 <div>
@@ -195,7 +192,7 @@ export default async function OrderDetailPage({
               </div>
 
               <div className="flex gap-4 relative z-10">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${orderData.status === "DELIVERED" ? "bg-gold text-black" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${order.status === "DELIVERED" ? "bg-gold text-black" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>
                   <CheckCircle size={14} />
                 </div>
                 <div>
@@ -211,11 +208,11 @@ export default async function OrderDetailPage({
                 {["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"].map((s) => (
                   <form key={s} action={async () => {
                     "use server";
-                    await updateOrderStatus(orderData.id, s);
+                    await updateOrderStatus(order.id, s);
                   }}>
                     <button
                       type="submit"
-                      className={`w-full py-2 px-4 text-xs font-bold rounded-lg border transition-all ${orderData.status === s
+                      className={`w-full py-2 px-4 text-xs font-bold rounded-lg border transition-all ${order.status === s
                         ? "bg-gold border-gold text-black"
                         : "border-gray-200 dark:border-gray-800 text-gray-500 hover:border-gold hover:text-gold"
                         }`}

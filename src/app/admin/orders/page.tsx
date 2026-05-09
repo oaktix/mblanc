@@ -67,7 +67,7 @@ export default async function AdminOrdersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm">{order.items.length} items</td>
-                    <td className="px-6 py-4 text-sm font-bold">₦{(order as any).totalAmount?.toLocaleString() ?? "0"}</td>
+                    <td className="px-6 py-4 text-sm font-bold">₦{order.total?.toLocaleString() ?? "0"}</td>
                     <td className="px-6 py-4">
                       <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${order.status === "DELIVERED" ? "bg-green-100 text-green-700" :
                         order.status === "PROCESSING" ? "bg-blue-100 text-blue-700" :

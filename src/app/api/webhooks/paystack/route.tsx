@@ -101,36 +101,42 @@ export async function POST(req: Request) {
                         color: item.variation?.color,
                     }));
 
-                    // Generate PDF Receipt
-                    const pdfBuffer = await generateOrderReceiptBuffer({
-                        id: order.id,
-                        customerName: shipping?.name || 'Valued Client',
-                        items: formattedItems,
-                        total: order.total,
-                        shippingAddress: `${shipping?.address}, ${shipping?.city}`,
-                    });
+                    let pdfBuffer: Buffer | null = null;
+                    try {
+                        pdfBuffer = await generateOrderReceiptBuffer({
+                            id: order.id,
+                            customerName: shipping?.name || 'Valued Client',
+                            items: formattedItems,
+                            total: order.total,
+                            shippingAddress: `${shipping?.address}, ${shipping?.city}`,
+                        });
+                    } catch (pdfError) {
+                        console.error('>>> [PAYSTACK WEBHOOK] PDF Generation Failed:', pdfError);
+                    }
 
-                    // Send to Buyer
+                    // 4. Send Confirmation Email to Customer
+                    const attachments = pdfBuffer ? [
+                        {
+                            content: pdfBuffer,
+                            filename: `MBlanc_Receipt_${order.id.slice(-6).toUpperCase()}.pdf`,
+                        }
+                    ] : [];
+
                     await resend.emails.send({
-                        from: 'MBlanc Bespoke <orders@mblancfits.com>',
-                        to: recipientEmail,
-                        subject: `Order Confirmed - #${order.id.slice(-6).toUpperCase()}`,
+                        from: 'MBlanc Bespoke <hello@mblancfits.com>',
+                        to: shipping?.email || order.user?.email || adminEmail,
+                        subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
                         react: (
                             <OrderConfirmationEmail 
                                 orderId={order.id}
-                                customerName={shipping?.name || 'there'}
-                                total={order.total}
+                                customerName={shipping?.name || order.user?.name || 'Valued Client'}
                                 items={formattedItems}
+                                total={order.total}
                                 shippingAddress={shipping?.address || ''}
                                 shippingCity={shipping?.city || ''}
                             />
                         ),
-                        attachments: [
-                            {
-                                filename: `MBLANC-Receipt-${order.id.slice(-6).toUpperCase()}.pdf`,
-                                content: pdfBuffer,
-                            },
-                        ],
+                        attachments: attachments,
                     });
 
                     // Send to Admin

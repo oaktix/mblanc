@@ -27,16 +27,7 @@ const productSchema = z.object({
   description: z.string().min(1, "Description is required"),
 });
 
-// Explicitly define the form values type
-type ProductFormValues = {
-  name: string;
-  category: string;
-  basePrice: number;
-  sku: string;
-  stock: number;
-  status: "PUBLISHED" | "DRAFT";
-  description: string;
-};
+type ProductFormValues = z.infer<typeof productSchema>;
 
 export default function ProductForm() {
   const [images, setImages] = useState<string[]>([]);
@@ -106,7 +97,9 @@ export default function ProductForm() {
 
     // Append standard fields
     Object.entries(values).forEach(([key, value]) => {
-      formData.append(key, value.toString());
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
     });
 
     // Append custom state fields

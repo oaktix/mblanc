@@ -28,7 +28,7 @@ const NAV_ITEMS = [
 export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const userRole = (session?.user as any)?.role;
+  const userRole = session?.user?.role;
 
   const filteredNavItems = NAV_ITEMS.filter(item => {
     if (item.adminOnly && userRole !== "ADMIN") return false;

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
                 status: "PENDING",
                 paymentStatus: "PENDING",
                 shippingDetails: shippingDetails, // Stores email, address, etc. as JSON
-                userId: (session?.user as any)?.id || null,
+                userId: session?.user?.id || null,
             },
         });
 
