@@ -17,9 +17,10 @@ export default withAuth(
     if (isAdminRoute) {
       const userRole = token?.role ? String(token.role).toUpperCase() : null;
       const hasAccess = isAuth && (userRole === "ADMIN" || userRole === "STAFF");
+      
+      console.log(`>>> [MIDDLEWARE] Admin Route Access: ${pathname} | User: ${token?.email} | Role: ${token?.role} | Access: ${hasAccess}`);
 
       if (!hasAccess) {
-        console.log(`>>> [MIDDLEWARE] Access Denied for ${token?.email}. Role: ${token?.role}`);
         return NextResponse.redirect(new URL("/auth/login", req.url));
       }
     }

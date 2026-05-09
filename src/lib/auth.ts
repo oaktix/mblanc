@@ -29,20 +29,24 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user || !user.password) {
+          console.log(`>>> [AUTH] User not found or no password: ${credentials.email}`);
           return null;
         }
 
         const isPasswordValid = await compare(credentials.password, user.password);
 
         if (!isPasswordValid) {
+          console.log(`>>> [AUTH] Invalid password for: ${credentials.email}`);
           return null;
         }
+
+        console.log(`>>> [AUTH] Login successful for: ${user.email} (Role: ${user.role})`);
 
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
+          role: String(user.role), // Ensure it's a string
         };
       },
     }),
