@@ -3,10 +3,19 @@ import { authOptions } from "@/lib/auth";
 import AdminLoginForm from "@/components/admin/AdminLoginForm";
 import prisma from "@/lib/prisma";
 import { TrendingUp, ShoppingBag, Users, Package2, ArrowUpRight } from "lucide-react";
+import { Suspense } from "react";
 
 export const unstable_instant = { prefetch: "static" };
 
-export default async function AdminPage() {
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<div className="animate-pulse h-screen bg-gray-100 dark:bg-black/20 rounded-xl"></div>}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+async function DashboardContent() {
   const session = await getServerSession(authOptions);
   const isAuthenticated =
     session?.user?.role === "ADMIN" || session?.user?.role === "STAFF";
