@@ -16,6 +16,13 @@ export default withAuth(
     const isAdminRoute = pathname.startsWith("/admin");
     const isAdminLogin = pathname === "/admin/login";
 
+    if (isAdminLogin && isAuth) {
+      const userRole = token?.role ? String(token.role).toUpperCase() : null;
+      if (userRole === "ADMIN" || userRole === "STAFF") {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
+    }
+
     if (isAdminRoute && !isAdminLogin) {
       const userRole = token?.role ? String(token.role).toUpperCase() : null;
       const hasAccess = isAuth && (userRole === "ADMIN" || userRole === "STAFF");
@@ -34,10 +41,18 @@ export default withAuth(
       // This logic ensures that if the route is matched in the config below, 
       // the user must be authorized (logged in) EXCEPT if we handle it in the function above.
       authorized: ({ token, req }) => {
-        // If it's the webhook, we don't require a token
-        if (req.nextUrl.pathname.startsWith("/api/webhooks/paystack")) {
+        const { pathname } = req.nextUrl;
+        
+        // Allow webhooks
+        if (pathname.startsWith("/api/webhooks/paystack")) {
           return true;
         }
+        
+        // Allow the admin login page itself so users can actually log in
+        if (pathname === "/admin/login") {
+          return true;
+        }
+
         return !!token;
       },
     },
