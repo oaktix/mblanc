@@ -116,7 +116,7 @@ export default function POSPage() {
 
   return (
     <AdminShell>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-140px)]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[calc(100vh-140px)] lg:h-[calc(100vh-140px)]">
       
       {/* Product Selection */}
       <div className="lg:col-span-2 flex flex-col gap-6">
