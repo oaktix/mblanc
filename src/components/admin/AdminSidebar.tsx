@@ -12,7 +12,7 @@ import {
   Pen,
   X
 } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Logo from "../layout/Logo";
 
 const NAV_ITEMS = [
@@ -21,12 +21,19 @@ const NAV_ITEMS = [
   { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { name: "POS System", href: "/admin/pos", icon: Pen },
   { name: "Customers", href: "/admin/customers", icon: Users },
-  { name: "Staff Portal", href: "/admin/staff", icon: Users },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
+  { name: "Staff Portal", href: "/admin/staff", icon: Users, adminOnly: true },
+  { name: "Settings", href: "/admin/settings", icon: Settings, adminOnly: true },
 ];
 
 export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const userRole = (session?.user as any)?.role;
+
+  const filteredNavItems = NAV_ITEMS.filter(item => {
+    if (item.adminOnly && userRole !== "ADMIN") return false;
+    return true;
+  });
 
   return (
     <aside className="w-64 h-screen bg-black text-ivory flex flex-col border-r border-white/10">
@@ -43,7 +50,7 @@ export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
       </div>
 
       <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
+        {filteredNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           return (
@@ -65,6 +72,11 @@ export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
       </nav>
 
       <div className="p-4 border-t border-white/10">
+        <div className="px-4 py-2 mb-4 bg-gold/5 border border-gold/20 rounded-lg">
+           <p className="text-[8px] uppercase tracking-widest text-gold font-bold">Authorized Personnel</p>
+           <p className="text-xs font-medium truncate">{session?.user?.name || "Staff User"}</p>
+           <p className="text-[9px] text-gray-500 uppercase tracking-widest">{userRole || "Access Level"}</p>
+        </div>
         <button 
           onClick={() => signOut({ callbackUrl: "/" })}
           className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-burgundy/20 hover:text-burgundy transition-colors w-full"

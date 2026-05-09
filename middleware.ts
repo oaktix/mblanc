@@ -32,6 +32,14 @@ export default withAuth(
       if (!hasAccess) {
         return NextResponse.redirect(new URL("/admin/login", req.url));
       }
+
+      const isAdminOnlyRoute = pathname.startsWith("/admin/staff") || pathname.startsWith("/admin/settings");
+      console.log(`>>> [MIDDLEWARE] Path: ${pathname} | Role: ${userRole} | AdminOnly: ${isAdminOnlyRoute}`);
+      
+      if (isAdminOnlyRoute && userRole !== "ADMIN") {
+        console.log(`>>> [MIDDLEWARE] ACCESS DENIED: ${userRole} attempted to access ADMIN-only route ${pathname}`);
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
     }
 
     return NextResponse.next();

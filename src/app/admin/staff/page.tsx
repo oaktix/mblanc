@@ -1,8 +1,13 @@
-import prisma from "@/lib/prisma";
-import Link from "next/link";
-import { Plus, UserCheck, Shield, Mail, Trash2 } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function StaffPage() {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "ADMIN") {
+    redirect("/admin");
+  }
+
   const staff = await prisma.user.findMany({
     where: {
       role: { in: ["ADMIN", "STAFF"] },
@@ -47,6 +52,27 @@ export default async function StaffPage() {
             </div>
 
             <div className="pt-6 border-t border-gray-50 dark:border-gray-900 flex justify-between items-center">
+               <div className="flex gap-4">
+                  <Link 
+                    href={`/admin/staff/${member.id}`}
+                    className="p-2 bg-gray-50 dark:bg-black text-gray-500 hover:text-gold transition-colors rounded"
+                    title="Edit Member"
+                  >
+                     <Edit size={16} />
+                  </Link>
+                  <form action={async () => {
+                    "use server";
+                    await deleteStaffAccount(member.id);
+                  }}>
+                    <button 
+                      type="submit"
+                      className="p-2 bg-gray-50 dark:bg-black text-gray-500 hover:text-burgundy transition-colors rounded"
+                      title="Delete Member"
+                    >
+                       <Trash2 size={16} />
+                    </button>
+                  </form>
+               </div>
                <div className="flex gap-2">
                   <div title="Inventory Access" className="p-1.5 bg-green-50 dark:bg-green-900/20 text-green-600 rounded">
                      <Shield size={14} />
@@ -55,9 +81,6 @@ export default async function StaffPage() {
                      <UserCheck size={14} />
                   </div>
                </div>
-               <button className="text-gray-300 hover:text-burgundy transition-colors">
-                  <Trash2 size={16} />
-               </button>
             </div>
           </div>
         ))}

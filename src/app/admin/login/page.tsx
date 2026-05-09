@@ -87,6 +87,14 @@ export default function AdminLoginPage() {
                   placeholder="••••••••"
                 />
               </div>
+              <div className="flex justify-end mt-2">
+                <Link 
+                  href="/admin/forgot-password" 
+                  className="text-[10px] text-gray-500 hover:text-gold transition-colors font-bold uppercase tracking-widest"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
 
             <button 

@@ -5,7 +5,15 @@ import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
 export async function createStaffAccount(formData: FormData) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "ADMIN") {
+    return { error: "Unauthorized: Admin access required" };
+  }
+
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -29,4 +37,62 @@ export async function createStaffAccount(formData: FormData) {
 
   revalidatePath("/admin/staff");
   redirect("/admin/staff");
+}
+
+export async function updateStaffAccount(id: string, formData: FormData) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "ADMIN") {
+    return { error: "Unauthorized: Admin access required" };
+  }
+
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const role = formData.get("role") as string;
+
+  try {
+    const data: any = {
+      name,
+      email: email.toLowerCase(),
+      role: role as any,
+    };
+
+    if (password && password.trim() !== "") {
+      data.password = await hash(password, 12);
+    }
+
+    await prisma.user.update({
+      where: { id },
+      data,
+    });
+  } catch (error) {
+    console.error("Error updating staff account:", error);
+    return { error: "Error updating account" };
+  }
+
+  revalidatePath("/admin/staff");
+  redirect("/admin/staff");
+}
+
+export async function deleteStaffAccount(id: string) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "ADMIN") {
+    return { error: "Unauthorized: Admin access required" };
+  }
+
+  // Prevent self-deletion
+  if (session.user.id === id) {
+    return { error: "Cannot delete your own account" };
+  }
+
+  try {
+    await prisma.user.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.error("Error deleting staff account:", error);
+    return { error: "Error deleting account" };
+  }
+
+  revalidatePath("/admin/staff");
 }
