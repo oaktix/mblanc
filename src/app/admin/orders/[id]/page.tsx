@@ -9,7 +9,7 @@ import { Suspense } from "react";
 import { resend } from "@/lib/resend";
 import { OrderUpdateEmail } from "@/components/emails/OrderUpdateEmail";
 
-export const unstable_instant = { prefetch: "static" };
+
 
 /**
  * Server Action to update order status and notify customer
