@@ -1,6 +1,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
+import Link from "next/link";
+import { Plus, UserCheck, Shield, Mail, Trash2, Edit } from "lucide-react";
+import { deleteStaffAccount } from "@/app/actions/staff";
 
 export default async function StaffPage() {
   const session = await getServerSession(authOptions);

@@ -61,7 +61,7 @@ function ResetPasswordForm() {
         <div className="p-4 bg-burgundy/10 border border-burgundy/30 text-burgundy text-xs rounded-lg font-bold">
           Invalid or missing recovery token.
         </div>
-        <Link href="/admin/forgot-password" size={14} className="text-gold uppercase tracking-widest text-[10px]">
+        <Link href="/admin/forgot-password" className="text-gold uppercase tracking-widest text-[10px]">
            Request New Reset Link
         </Link>
       </div>
