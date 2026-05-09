@@ -25,13 +25,10 @@ export default function LoginPage() {
         redirect: false,
       });
 
-      console.log(">>> [LOGIN_RES]", res);
-
       if (res?.error) {
         setError("Invalid email or password");
       } else {
         // Use window.location.href for a hard redirect to ensure session cookies are picked up by middleware
-        console.log(">>> Redirecting to /admin...");
         window.location.href = "/admin";
       }
     } catch (err) {

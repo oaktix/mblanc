@@ -37,7 +37,6 @@ export async function POST(req: Request) {
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
     const resetLink = `${baseUrl}/admin/reset-password?token=${token}`;
 
-    console.log(`>>> [AUTH] Generated reset link: ${resetLink}`);
 
     if (!process.env.RESEND_API_KEY) {
       console.error(">>> [AUTH] RESEND_API_KEY is missing from environment variables.");
@@ -61,7 +60,6 @@ export async function POST(req: Request) {
               </p>
             </div>
             <p style="font-size: 10px; color: #666;">If you did not request this, please ignore this email. This link will expire in 1 hour.</p>
-            <p style="font-size: 8px; color: #444; margin-top: 20px;">Development Note: This email was sent via Resend's onboarding domain. In production, verify your own domain to avoid spam filters.</p>
           </div>
         `,
       });
@@ -75,7 +73,7 @@ export async function POST(req: Request) {
       console.error(">>> [AUTH] Fatal error sending reset email:", emailError);
     }
 
-    return NextResponse.json({ message: "Reset link generated" });
+    return NextResponse.json({ message: "If an account exists, a reset link has been sent." });
   } catch (error) {
     console.error(">>> Forgot password error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

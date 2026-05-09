@@ -26,8 +26,6 @@ export default function CheckoutForm() {
   const initializePayment = usePaystackPayment(config);
 
   const onSuccess = (reference: any) => {
-    console.log("Payment Successful:", reference);
-
     // Clear the cart before leaving
     clearCart();
 

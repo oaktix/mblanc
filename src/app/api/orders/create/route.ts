@@ -24,7 +24,6 @@ export async function POST(req: Request) {
             },
         });
 
-        console.log(`>>> [ORDER_CREATED] ID: ${order.id}. Processing ${items.length} items...`);
 
         // 2. Create OrderItems one by one to ensure ID sanitization
         for (const item of items) {
@@ -36,7 +35,6 @@ export async function POST(req: Request) {
                 ? String(item.variationId).replace(/-+$/, "").trim()
                 : null;
 
-            console.log(`>>> [ITEM_INSERT] Linking Product: "${cleanProductId}" to Order: "${order.id}"`);
 
             await prisma.orderItem.create({
                 data: {
@@ -60,11 +58,7 @@ export async function POST(req: Request) {
 
         // Return the specific error message to help you debug in the browser console
         return NextResponse.json(
-            {
-                error: "Failed to initialize checkout",
-                details: error.message,
-                code: error.code
-            },
+            { error: "Failed to initialize checkout" },
             { status: 500 }
         );
     }

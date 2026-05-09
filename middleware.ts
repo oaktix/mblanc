@@ -42,7 +42,6 @@ export default withAuth(
       const userRole = rawRole ? String(rawRole).toUpperCase() : null;
       const hasAccess = isAuth && (userRole === "ADMIN" || userRole === "STAFF");
 
-      console.log(`>>> [MIDDLEWARE] Path: ${pathname} | Auth: ${isAuth} | Role: ${userRole} | Access: ${hasAccess}`);
 
       if (!hasAccess) {
         return NextResponse.redirect(new URL("/admin", req.url));
@@ -53,7 +52,6 @@ export default withAuth(
         pathname.startsWith("/admin/staff") || pathname.startsWith("/admin/settings");
 
       if (isAdminOnlyRoute && userRole !== "ADMIN") {
-        console.log(`>>> [MIDDLEWARE] FORBIDDEN: ${userRole} tried to access ADMIN-ONLY route ${pathname}`);
         return NextResponse.redirect(new URL("/admin", req.url));
       }
     }
