@@ -28,8 +28,8 @@ export default function LoginPage() {
       if (res?.error) {
         setError("Invalid email or password");
       } else {
-        router.push("/admin");
-        router.refresh();
+        // Use window.location.href for a hard redirect to ensure session cookies are picked up by middleware
+        window.location.href = "/admin";
       }
     } catch (err) {
       setError("An unexpected error occurred");

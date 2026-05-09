@@ -51,6 +51,7 @@ export const config = {
    * - favicon.ico (favicon file)
    */
   matcher: [
+    "/admin",
     "/admin/:path*",
     "/account/:path*",
     // We add the webhook here just so the 'authorized' callback 
