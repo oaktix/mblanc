@@ -48,9 +48,9 @@ async function DashboardContent() {
           <h1 className="text-3xl font-serif text-charcoal dark:text-ivory">Dashboard Overview</h1>
           <p className="text-gray-500 font-light mt-1">Monitor your atelier&apos;s performance and orders.</p>
         </div>
-        <button className="px-6 py-2 bg-gold text-black font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-black hover:text-gold transition-all">
+        <a href="/api/admin/export?type=orders" download className="px-6 py-2 bg-gold text-black font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-black hover:text-gold transition-all">
           View Reports <ArrowUpRight size={16} />
-        </button>
+        </a>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">

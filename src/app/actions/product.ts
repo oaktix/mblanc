@@ -48,3 +48,17 @@ export async function createProduct(formData: FormData) {
   revalidatePath("/shop");
   redirect("/admin/products");
 }
+
+export async function deleteProduct(id: string) {
+  try {
+    await prisma.product.delete({
+      where: { id },
+    });
+    revalidatePath("/admin/products");
+    revalidatePath("/shop");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    return { error: "Failed to delete product" };
+  }
+}

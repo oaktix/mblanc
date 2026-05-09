@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, Search, Edit2, Trash2, ExternalLink } from "lucide-react";
+import { revalidatePath } from "next/cache";
 import { Suspense } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 
@@ -35,8 +36,8 @@ export default function AdminProductsPage() {
             />
           </div>
           <div className="flex gap-4">
-             <button className="text-sm font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors">Export CSV</button>
-             <button className="text-sm font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors">Filters</button>
+             <a href="/api/admin/export?type=products" download className="text-sm font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors">Export CSV</a>
+
           </div>
         </div>
 
@@ -113,9 +114,15 @@ async function ProductsList() {
               <button className="p-2 text-gray-400 hover:text-blue-500 transition-colors">
                 <Edit2 size={16} />
               </button>
-              <button className="p-2 text-gray-400 hover:text-burgundy transition-colors">
-                <Trash2 size={16} />
-              </button>
+              <form action={async () => {
+                "use server";
+                await prisma.product.delete({ where: { id: product.id } });
+                revalidatePath("/admin/products");
+              }}>
+                <button type="submit" className="p-2 text-gray-400 hover:text-burgundy transition-colors" title="Delete Product">
+                  <Trash2 size={16} />
+                </button>
+              </form>
             </div>
           </td>
         </tr>

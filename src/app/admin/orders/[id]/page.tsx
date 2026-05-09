@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, Printer, Truck, CheckCircle, XCircle } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { Suspense } from "react";
+import PrintButton from "@/components/admin/PrintButton";
 
 import { resend } from "@/lib/resend";
 import { OrderUpdateEmail } from "@/components/emails/OrderUpdateEmail";
@@ -99,10 +100,7 @@ async function OrderContent({ params }: { params: Promise<{ id: string }> }) {
         </div>
 
         <div className="flex gap-4">
-          <button className="px-6 py-2 bg-white dark:bg-charcoal border border-gray-200 dark:border-gray-800 text-charcoal dark:text-ivory font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50 transition-all">
-            <Printer size={18} />
-            Print Invoice
-          </button>
+          <PrintButton />
 
           <form action={async () => {
             "use server";
@@ -235,12 +233,6 @@ async function OrderContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
           </div>
 
-          <div className="bg-burgundy/10 p-6 rounded-xl border border-burgundy/20">
-            <h3 className="text-sm font-bold text-burgundy mb-2">Internal Note</h3>
-            <p className="text-xs text-burgundy/70 font-light italic">
-              Client requested extra tapering on the trousers. Ensure master tailor is aware before final fitting.
-            </p>
-          </div>
         </div>
       </div>
     </>

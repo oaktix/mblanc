@@ -25,6 +25,9 @@ export default function AdminCustomersPage() {
               className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:border-gold transition-colors"
             />
           </div>
+          <a href="/api/admin/export?type=customers" download className="text-sm font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors">
+            Export CSV
+          </a>
         </div>
 
         <div className="overflow-x-auto">
