@@ -26,7 +26,7 @@ export default function AboutPage() {
       <section className="relative h-[50vh] flex items-center justify-center bg-black overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="/images/about-hero.jpg" 
+            src="/images/Craftmanship.jpg" 
             alt="Craftsmanship" 
             className="w-full h-full object-cover opacity-60"
           />
