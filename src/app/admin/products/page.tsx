@@ -1,13 +1,11 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, Search, Edit2, Trash2, ExternalLink } from "lucide-react";
-import Image from "next/image";
+import { Suspense } from "react";
 
-export default async function AdminProductsPage() {
-  const products = await prisma.product.findMany({
-    orderBy: { createdAt: "desc" },
-  });
+export const unstable_instant = { prefetch: "static" };
 
+export default function AdminProductsPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-10">
@@ -52,54 +50,73 @@ export default async function AdminProductsPage() {
                 <th className="px-6 py-4 font-bold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
-              {products.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50/50 dark:hover:bg-black/20 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-14 bg-cream dark:bg-black rounded-md flex-shrink-0 flex items-center justify-center border border-gold/10">
-                        {/* Image Placeholder */}
-                        <span className="text-[10px] font-serif italic text-gold/50">Img</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-charcoal dark:text-ivory">{product.name}</p>
-                        <p className="text-[10px] text-gray-400 font-mono">{product.sku}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-black rounded-md text-gray-600 dark:text-gray-400">
-                      {product.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium">₦{product.basePrice.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-sm">{product.stock}</td>
-                  <td className="px-6 py-4">
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full italic uppercase tracking-wider ${
-                      product.status === "PUBLISHED" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-                    }`}>
-                      {product.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-3">
-                      <Link href={`/shop/${product.slug}`} target="_blank" className="p-2 text-gray-400 hover:text-gold transition-colors">
-                        <ExternalLink size={16} />
-                      </Link>
-                      <button className="p-2 text-gray-400 hover:text-blue-500 transition-colors">
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="p-2 text-gray-400 hover:text-burgundy transition-colors">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+            <Suspense fallback={
+              <tbody>
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400 italic animate-pulse">
+                    Loading inventory...
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              </tbody>
+            }>
+              <ProductsList />
+            </Suspense>
           </table>
         </div>
       </div>
     </div>
+  );
+}
+
+async function ProductsList() {
+  const products = await prisma.product.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
+  return (
+    <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
+      {products.map((product) => (
+        <tr key={product.id} className="hover:bg-gray-50/50 dark:hover:bg-black/20 transition-colors">
+          <td className="px-6 py-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-14 bg-cream dark:bg-black rounded-md flex-shrink-0 flex items-center justify-center border border-gold/10">
+                <span className="text-[10px] font-serif italic text-gold/50">Img</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-charcoal dark:text-ivory">{product.name}</p>
+                <p className="text-[10px] text-gray-400 font-mono">{product.sku}</p>
+              </div>
+            </div>
+          </td>
+          <td className="px-6 py-4">
+            <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-black rounded-md text-gray-600 dark:text-gray-400">
+              {product.category}
+            </span>
+          </td>
+          <td className="px-6 py-4 text-sm font-medium">₦{product.basePrice.toLocaleString()}</td>
+          <td className="px-6 py-4 text-sm">{product.stock}</td>
+          <td className="px-6 py-4">
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full italic uppercase tracking-wider ${
+              product.status === "PUBLISHED" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+            }`}>
+              {product.status}
+            </span>
+          </td>
+          <td className="px-6 py-4 text-right">
+            <div className="flex justify-end gap-3">
+              <Link href={`/shop/${product.slug}`} target="_blank" className="p-2 text-gray-400 hover:text-gold transition-colors">
+                <ExternalLink size={16} />
+              </Link>
+              <button className="p-2 text-gray-400 hover:text-blue-500 transition-colors">
+                <Edit2 size={16} />
+              </button>
+              <button className="p-2 text-gray-400 hover:text-burgundy transition-colors">
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
   );
 }

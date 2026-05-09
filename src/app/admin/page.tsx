@@ -4,6 +4,8 @@ import AdminLoginForm from "@/components/admin/AdminLoginForm";
 import prisma from "@/lib/prisma";
 import { TrendingUp, ShoppingBag, Users, Package2, ArrowUpRight } from "lucide-react";
 
+export const unstable_instant = { prefetch: "static" };
+
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
   const isAuthenticated =

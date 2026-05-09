@@ -1,16 +1,10 @@
 import prisma from "@/lib/prisma";
 import { Search, Mail, Phone, Calendar, ShoppingBag } from "lucide-react";
-export const dynamic = "force-dynamic";
+import { Suspense } from "react";
 
-export default async function AdminCustomersPage() {
-  const customers = await prisma.user.findMany({
-    where: { role: "CUSTOMER" },
-    include: {
-      orders: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+export const unstable_instant = { prefetch: "static" };
 
+export default function AdminCustomersPage() {
   return (
     <div>
       <div className="mb-10">
@@ -42,55 +36,79 @@ export default async function AdminCustomersPage() {
                 <th className="px-6 py-4 font-bold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
-              {customers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-gray-50/50 dark:hover:bg-black/20 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-cream dark:bg-black border border-gold/20 flex items-center justify-center font-serif text-gold text-xs">
-                        {customer.name?.charAt(0)}
-                      </div>
-                      <span className="text-sm font-semibold">{customer.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                        <Mail size={12} className="text-gold" />
-                        {customer.email}
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] text-gray-400">
-                        <Phone size={12} />
-                        Not provided
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <Calendar size={14} />
-                      {new Date(customer.createdAt).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-xs">
-                      <ShoppingBag size={14} className="text-gray-400" />
-                      {customer.orders.length} orders
-                    </div>
-                  </td>
-                  <td className=" text-burgundy">
-                    ₦{customer.orders.reduce((acc, o) => acc + o.total, 0).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-[10px] uppercase tracking-widest font-bold text-gold hover:text-black dark:hover:text-ivory transition-colors">
-                      View Profile
-                    </button>
+            <Suspense fallback={
+              <tbody>
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400 italic animate-pulse">
+                    Loading client directory...
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              </tbody>
+            }>
+              <CustomersList />
+            </Suspense>
           </table>
         </div>
       </div>
     </div>
+  );
+}
+
+async function CustomersList() {
+  const customers = await prisma.user.findMany({
+    where: { role: "CUSTOMER" },
+    include: {
+      orders: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return (
+    <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
+      {customers.map((customer) => (
+        <tr key={customer.id} className="hover:bg-gray-50/50 dark:hover:bg-black/20 transition-colors">
+          <td className="px-6 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-cream dark:bg-black border border-gold/20 flex items-center justify-center font-serif text-gold text-xs">
+                {customer.name?.charAt(0)}
+              </div>
+              <span className="text-sm font-semibold">{customer.name}</span>
+            </div>
+          </td>
+          <td className="px-6 py-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                <Mail size={12} className="text-gold" />
+                {customer.email}
+              </div>
+              <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                <Phone size={12} />
+                Not provided
+              </div>
+            </div>
+          </td>
+          <td className="px-6 py-4">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Calendar size={14} />
+              {new Date(customer.createdAt).toLocaleDateString()}
+            </div>
+          </td>
+          <td className="px-6 py-4">
+            <div className="flex items-center gap-2 text-xs">
+              <ShoppingBag size={14} className="text-gray-400" />
+              {customer.orders.length} orders
+            </div>
+          </td>
+          <td className="px-6 py-4 text-sm font-bold text-burgundy">
+            ₦{customer.orders.reduce((acc, o) => acc + o.total, 0).toLocaleString()}
+          </td>
+          <td className="px-6 py-4 text-right">
+            <button className="text-[10px] uppercase tracking-widest font-bold text-gold hover:text-black dark:hover:text-ivory transition-colors">
+              View Profile
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
   );
 }

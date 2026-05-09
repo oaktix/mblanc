@@ -4,12 +4,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Printer, Truck, CheckCircle, XCircle } from "lucide-react";
 import { revalidatePath } from "next/cache";
+import { Suspense } from "react";
 
 import { resend } from "@/lib/resend";
 import { OrderUpdateEmail } from "@/components/emails/OrderUpdateEmail";
 
-export const dynamic = "force-dynamic";
-
+export const unstable_instant = { prefetch: "static" };
 
 /**
  * Server Action to update order status and notify customer
@@ -46,11 +46,21 @@ async function updateOrderStatus(orderId: string, status: string) {
   revalidatePath("/admin/orders");
 }
 
-export default async function OrderDetailPage({
+export default function OrderDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  return (
+    <div className="p-6">
+      <Suspense fallback={<div className="animate-pulse h-screen bg-gray-100 dark:bg-black/20 rounded-xl"></div>}>
+        <OrderContent params={params} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function OrderContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const order = await prisma.order.findUnique({
@@ -70,7 +80,7 @@ export default async function OrderDetailPage({
   }
 
   return (
-    <div className="p-6">
+    <>
       <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <Link
@@ -233,6 +243,6 @@ export default async function OrderDetailPage({
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

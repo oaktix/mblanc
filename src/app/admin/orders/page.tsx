@@ -1,16 +1,11 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { Search, Eye, Filter, Download } from "lucide-react";
+import { Suspense } from "react";
 
-export default async function AdminOrdersPage() {
-  const orders = await prisma.order.findMany({
-    include: {
-      user: true,
-      items: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+export const unstable_instant = { prefetch: "static" };
 
+export default function AdminOrdersPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-10">
@@ -55,48 +50,72 @@ export default async function AdminOrdersPage() {
                 <th className="px-6 py-4 font-bold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
-              {orders.length > 0 ? (
-                orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50/50 dark:hover:bg-black/20 transition-colors">
-                    <td className="px-6 py-4 text-sm font-mono font-bold text-gold">#{order.id.slice(-6).toUpperCase()}</td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="text-sm font-semibold">{order.user?.name || "Guest Customer"}</p>
-                        <p className="text-xs text-gray-500">{order.user?.email || "No email"}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm">{order.items.length} items</td>
-                    <td className="px-6 py-4 text-sm font-bold">₦{order.total?.toLocaleString() ?? "0"}</td>
-                    <td className="px-6 py-4">
-                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${order.status === "DELIVERED" ? "bg-green-100 text-green-700" :
-                        order.status === "PROCESSING" ? "bg-blue-100 text-blue-700" :
-                          "bg-amber-100 text-amber-700"
-                        }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-gray-500">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Link href={`/admin/orders/${order.id}`} className="p-2 text-gray-400 hover:text-gold transition-colors inline-block">
-                        <Eye size={18} />
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              ) : (
+            <Suspense fallback={
+              <tbody>
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 italic font-light">
-                    No orders have been placed yet.
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-400 italic animate-pulse">
+                    Loading orders...
                   </td>
                 </tr>
-              )}
-            </tbody>
+              </tbody>
+            }>
+              <OrdersList />
+            </Suspense>
           </table>
         </div>
       </div>
     </div>
+  );
+}
+
+async function OrdersList() {
+  const orders = await prisma.order.findMany({
+    include: {
+      user: true,
+      items: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return (
+    <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
+      {orders.length > 0 ? (
+        orders.map((order) => (
+          <tr key={order.id} className="hover:bg-gray-50/50 dark:hover:bg-black/20 transition-colors">
+            <td className="px-6 py-4 text-sm font-mono font-bold text-gold">#{order.id.slice(-6).toUpperCase()}</td>
+            <td className="px-6 py-4">
+              <div>
+                <p className="text-sm font-semibold">{order.user?.name || "Guest Customer"}</p>
+                <p className="text-xs text-gray-500">{order.user?.email || "No email"}</p>
+              </div>
+            </td>
+            <td className="px-6 py-4 text-sm">{order.items.length} items</td>
+            <td className="px-6 py-4 text-sm font-bold">₦{order.total?.toLocaleString() ?? "0"}</td>
+            <td className="px-6 py-4">
+              <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${order.status === "DELIVERED" ? "bg-green-100 text-green-700" :
+                order.status === "PROCESSING" ? "bg-blue-100 text-blue-700" :
+                  "bg-amber-100 text-amber-700"
+                }`}>
+                {order.status}
+              </span>
+            </td>
+            <td className="px-6 py-4 text-xs text-gray-500">
+              {new Date(order.createdAt).toLocaleDateString()}
+            </td>
+            <td className="px-6 py-4 text-right">
+              <Link href={`/admin/orders/${order.id}`} className="p-2 text-gray-400 hover:text-gold transition-colors inline-block">
+                <Eye size={18} />
+              </Link>
+            </td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td colSpan={7} className="px-6 py-12 text-center text-gray-500 italic font-light">
+            No orders have been placed yet.
+          </td>
+        </tr>
+      )}
+    </tbody>
   );
 }
