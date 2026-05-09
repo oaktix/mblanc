@@ -17,7 +17,7 @@ export async function createStaffAccount(formData: FormData) {
     await prisma.user.create({
       data: {
         name,
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
         role: role as any,
       },
