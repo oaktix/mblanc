@@ -54,7 +54,7 @@ export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           return (
-            <a 
+            <Link 
               key={item.href} 
               href={item.href}
               className={`flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
@@ -65,7 +65,7 @@ export default function AdminSidebar({ onClose }: { onClose?: () => void }) {
             >
               <Icon size={20} />
               <span className="text-sm font-medium">{item.name}</span>
-            </a>
+            </Link>
           );
         })}
       </nav>
