@@ -32,17 +32,17 @@ export default withAuth(
     if (pathname === "/admin" && isAuth) {
       const userRole = token?.role ? String(token.role).toUpperCase() : null;
       if (userRole === "ADMIN" || userRole === "STAFF") {
-        // Already on dashboard — let through (page handles rendering)
-        return NextResponse.next();
+        return withPathname;
       }
     }
 
     // Protect non-public admin routes
     if (pathname.startsWith("/admin") && !isPublicAdminPath) {
-      const userRole = token?.role ? String(token.role).toUpperCase() : null;
+      const rawRole = token?.role;
+      const userRole = rawRole ? String(rawRole).toUpperCase() : null;
       const hasAccess = isAuth && (userRole === "ADMIN" || userRole === "STAFF");
 
-      console.log(`>>> [MIDDLEWARE] Admin Route: ${pathname} | Role: ${token?.role} | Access: ${hasAccess}`);
+      console.log(`>>> [MIDDLEWARE] Path: ${pathname} | Auth: ${isAuth} | Role: ${userRole} | Access: ${hasAccess}`);
 
       if (!hasAccess) {
         return NextResponse.redirect(new URL("/admin", req.url));
@@ -53,7 +53,7 @@ export default withAuth(
         pathname.startsWith("/admin/staff") || pathname.startsWith("/admin/settings");
 
       if (isAdminOnlyRoute && userRole !== "ADMIN") {
-        console.log(`>>> [MIDDLEWARE] ACCESS DENIED: ${userRole} attempted ${pathname}`);
+        console.log(`>>> [MIDDLEWARE] FORBIDDEN: ${userRole} tried to access ADMIN-ONLY route ${pathname}`);
         return NextResponse.redirect(new URL("/admin", req.url));
       }
     }

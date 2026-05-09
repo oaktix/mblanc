@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
-import { Menu } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
+import { Menu, LogOut } from "lucide-react";
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { data: session } = useSession();
 
   return (
     <div className="min-h-screen bg-ivory dark:bg-black flex">
@@ -27,12 +29,23 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             </div>
             <img src="/header-logo.png" alt="MBLANC" className="h-20 w-auto object-contain md:hidden" />
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <div className="hidden sm:flex flex-col items-end">
-              <span className="text-xs font-bold text-charcoal dark:text-ivory">Atelier Manager</span>
-              <span className="text-[10px] text-gray-500 uppercase tracking-widest">Active Session</span>
+              <span className="text-xs font-bold text-charcoal dark:text-ivory truncate max-w-[150px]">
+                {session?.user?.name || "Atelier Manager"}
+              </span>
+              <span className="text-[10px] text-gray-500 uppercase tracking-widest">{session?.user?.role || "Active Session"}</span>
             </div>
-            <div className="w-10 h-10 rounded-full bg-cream dark:bg-charcoal border border-gold/20 flex items-center justify-center font-serif text-gold">A</div>
+            <div className="w-10 h-10 rounded-full bg-cream dark:bg-charcoal border border-gold/20 flex items-center justify-center font-serif text-gold uppercase shadow-inner">
+              {session?.user?.name?.[0] || "A"}
+            </div>
+            <button 
+              onClick={() => signOut({ callbackUrl: "/admin" })}
+              className="p-2 text-gray-400 hover:text-burgundy hover:bg-burgundy/5 rounded-lg transition-all"
+              title="Sign Out"
+            >
+              <LogOut size={20} />
+            </button>
           </div>
         </header>
         <main className="p-6 md:p-10 w-full overflow-x-hidden">

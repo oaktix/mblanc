@@ -34,12 +34,20 @@ export async function POST(req: Request) {
       },
     });
 
-    const resetLink = `${process.env.NEXTAUTH_URL}/admin/reset-password?token=${token}`;
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const resetLink = `${baseUrl}/admin/reset-password?token=${token}`;
+
+    console.log(`>>> [AUTH] Generated reset link: ${resetLink}`);
+
+    if (!process.env.RESEND_API_KEY) {
+      console.error(">>> [AUTH] RESEND_API_KEY is missing from environment variables.");
+      return NextResponse.json({ message: "Reset link generated internally (check logs)" });
+    }
 
     // Send email
     try {
-      await resend.emails.send({
-        from: "MBLANC Atelier <onboarding@resend.dev>", // Replace with verified domain in production
+      const { data, error } = await resend.emails.send({
+        from: "MBLANC Atelier <onboarding@resend.dev>",
         to: email,
         subject: "Security: Password Reset Request",
         html: `
@@ -53,12 +61,18 @@ export async function POST(req: Request) {
               </p>
             </div>
             <p style="font-size: 10px; color: #666;">If you did not request this, please ignore this email. This link will expire in 1 hour.</p>
+            <p style="font-size: 8px; color: #444; margin-top: 20px;">Development Note: This email was sent via Resend's onboarding domain. In production, verify your own domain to avoid spam filters.</p>
           </div>
         `,
       });
+
+      if (error) {
+        console.error(">>> [RESEND ERROR]:", error);
+      } else {
+        console.log(">>> [RESEND SUCCESS]:", data);
+      }
     } catch (emailError) {
-      console.error(">>> Error sending reset email:", emailError);
-      // Still return success so we don't leak info, but log it
+      console.error(">>> [AUTH] Fatal error sending reset email:", emailError);
     }
 
     return NextResponse.json({ message: "Reset link generated" });

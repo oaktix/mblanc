@@ -17,6 +17,9 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "MBlanc Bespoke | Luxury Menswear",
   description: "Nigeria's premier destination for custom-tailored menswear. From corporate suits to regal Agbadas.",
+  icons: {
+    icon: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({
