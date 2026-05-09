@@ -4,7 +4,7 @@ import { hash } from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function createSuperAdmin() {
-  const email = "admin@mblanc.com";
+  const email = "admin@mblancfits.com";
   const password = "MblancMaster2026!";
   const name = "Master Admin";
 
