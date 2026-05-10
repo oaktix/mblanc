@@ -9,31 +9,42 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const p = prisma as any;
+  
+  let latestProducts = [];
+  let dynamicCategories = [];
 
-  // Fetch latest products
-  const latestProducts = await p.product.findMany({
-    where: { status: "PUBLISHED" },
-    orderBy: { createdAt: "desc" },
-    take: 6,
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      basePrice: true,
-      category: true,
-      images: true,
+  try {
+    // Fetch latest products
+    if (p.product) {
+      latestProducts = await p.product.findMany({
+        where: { status: "PUBLISHED" },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          basePrice: true,
+          category: true,
+          images: true,
+        }
+      });
     }
-  });
 
-  // Fetch dynamic categories
-  const dynamicCategories = await p.category.findMany({
-    orderBy: { name: "asc" }
-  });
+    // Fetch dynamic categories
+    if (p.category) {
+      dynamicCategories = await p.category.findMany({
+        orderBy: { name: "asc" }
+      });
+    }
+  } catch (err) {
+    console.error("Homepage data fetch error:", err);
+  }
 
   return (
     <HomeClient 
-      latestProducts={latestProducts} 
-      categories={dynamicCategories} 
+      latestProducts={latestProducts || []} 
+      categories={dynamicCategories || []} 
     />
   );
 }

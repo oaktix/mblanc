@@ -3,26 +3,45 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  const { id } = await params;
-  await prisma.coupon.delete({ where: { id } });
-  return NextResponse.json({ success: true });
+  const p = prisma as any;
+  try {
+    await p.coupon.delete({
+      where: { id: params.id },
+    });
+    return NextResponse.json({ message: "Coupon deleted" });
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to delete coupon" }, { status: 500 });
+  }
 }
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  const { id } = await params;
-  const { isActive } = await req.json();
+  const p = prisma as any;
+  const body = await req.json();
   
-  const coupon = await prisma.coupon.update({
-    where: { id },
-    data: { isActive }
-  });
-  
-  return NextResponse.json(coupon);
+  try {
+    const coupon = await p.coupon.update({
+      where: { id: params.id },
+      data: body
+    });
+    return NextResponse.json(coupon);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to update coupon" }, { status: 500 });
+  }
 }

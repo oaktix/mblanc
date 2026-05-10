@@ -13,34 +13,44 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
         }
 
-        // 1. Validate all products exist before starting transaction
-        // Using (prisma as any) to bypass stale local types due to EPERM during generation
         const p = prisma as any;
 
+        // 1. Validate all products exist
         for (const item of items) {
+            const searchId = String(item.id).trim();
             const product = await p.product.findUnique({
-                where: { id: String(item.id).replace(/-+$/, "").trim() }
+                where: { id: searchId }
             });
+
             if (!product) {
-                return NextResponse.json({ error: `Product "${item.name}" is no longer available. Please clear your cart.` }, { status: 400 });
+                const productBySlug = await p.product.findUnique({
+                    where: { slug: item.slug || searchId }
+                });
+
+                if (!productBySlug) {
+                    return NextResponse.json({ 
+                        error: `Product "${item.name}" is no longer available. Please clear your cart.`,
+                        details: `ID: ${searchId}`
+                    }, { status: 400 });
+                }
             }
         }
 
-        // 2. Handle User (Guest or Authenticated)
+        // 2. Handle User
         let finalUserId = session?.user?.id || null;
 
         if (!finalUserId && shippingDetails?.email) {
             const guestEmail = shippingDetails.email.toLowerCase();
+            // REMOVING 'phone' temporarily because the generated Prisma client is stuck on an old version 
+            // that doesn't recognize the 'phone' field yet.
             const guestUser = await p.user.upsert({
                 where: { email: guestEmail },
                 update: {
                     name: shippingDetails.name || undefined,
-                    phone: shippingDetails.phone || undefined,
                 },
                 create: {
                     email: guestEmail,
                     name: shippingDetails.name || "Guest Client",
-                    phone: shippingDetails.phone || null,
                     role: "CUSTOMER",
                 },
             });
@@ -50,8 +60,8 @@ export async function POST(req: Request) {
         // 3. Create Order
         const order = await p.order.create({
             data: {
-                total: total,
-                discount: discount || 0,
+                total: Number(total),
+                discount: Number(discount) || 0,
                 couponCode: couponCode || null,
                 status: "PENDING",
                 paymentStatus: "PENDING",
@@ -61,7 +71,7 @@ export async function POST(req: Request) {
             },
         });
 
-        // 4. Update Coupon (if valid)
+        // 4. Update Coupon
         if (couponCode) {
             try {
                 await p.coupon.update({
@@ -69,16 +79,14 @@ export async function POST(req: Request) {
                     data: { usageCount: { increment: 1 } }
                 });
             } catch (e) {
-                console.warn("Coupon update failed (might be invalid code):", couponCode);
+                console.warn("Coupon update failed:", couponCode);
             }
         }
 
         // 5. Create OrderItems
         for (const item of items) {
-            const cleanProductId = String(item.id).replace(/-+$/, "").trim();
-            const cleanVariationId = item.variationId
-                ? String(item.variationId).replace(/-+$/, "").trim()
-                : null;
+            const cleanProductId = String(item.id).trim();
+            const cleanVariationId = item.variationId ? String(item.variationId).trim() : null;
 
             await p.orderItem.create({
                 data: {
@@ -86,7 +94,7 @@ export async function POST(req: Request) {
                     productId: cleanProductId,
                     quantity: Number(item.quantity),
                     price: Number(item.price),
-                    ...(cleanVariationId && cleanVariationId !== ""
+                    ...(cleanVariationId && cleanVariationId !== "" && cleanVariationId !== "null"
                         ? { variationId: cleanVariationId }
                         : {}),
                 },
@@ -98,7 +106,7 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error(">>> [ORDER_CREATE] CRITICAL ERROR:", error);
         return NextResponse.json(
-            { error: "Failed to create order. Please check your network or cart items.", details: error.message },
+            { error: "Failed to create order. Please try again.", details: error.message },
             { status: 500 }
         );
     }
