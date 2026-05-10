@@ -4,6 +4,10 @@ import { Search, Eye, Filter, Download } from "lucide-react";
 import { Suspense } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import ExportButton from "@/components/admin/ExportButton";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import DeleteOrderButton from "@/components/admin/DeleteOrderButton";
+import { Trash2 } from "lucide-react";
 
 export const unstable_instant = { prefetch: "static" };
 
@@ -67,6 +71,7 @@ export default function AdminOrdersPage() {
 }
 
 async function OrdersList() {
+  const session = await getServerSession(authOptions);
   const orders = await prisma.order.findMany({
     include: {
       user: true,
@@ -101,9 +106,14 @@ async function OrdersList() {
               {new Date(order.createdAt).toLocaleDateString()}
             </td>
             <td className="px-6 py-4 text-right">
-              <Link href={`/admin/orders/${order.id}`} className="p-2 text-gray-400 hover:text-gold transition-colors inline-block">
-                <Eye size={18} />
-              </Link>
+              <div className="flex justify-end items-center gap-2">
+                <Link href={`/admin/orders/${order.id}`} className="p-2 text-gray-400 hover:text-gold transition-colors inline-block">
+                  <Eye size={18} />
+                </Link>
+                {session?.user?.role === "ADMIN" && (
+                  <DeleteOrderButton orderId={order.id} variant="icon" />
+                )}
+              </div>
             </td>
           </tr>
         ))

@@ -9,6 +9,9 @@ import PrintButton from "@/components/admin/PrintButton";
 
 import { resend } from "@/lib/resend";
 import { OrderUpdateEmail } from "@/components/emails/OrderUpdateEmail";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import DeleteOrderButton from "@/components/admin/DeleteOrderButton";
 
 
 
@@ -63,6 +66,7 @@ export default function OrderDetailPage({
 
 async function OrderContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const session = await getServerSession(authOptions);
 
   const order = await prisma.order.findUnique({
     where: { id },
@@ -111,6 +115,10 @@ async function OrderContent({ params }: { params: Promise<{ id: string }> }) {
               Mark Delivered
             </button>
           </form>
+
+          {session?.user?.role === "ADMIN" && (
+            <DeleteOrderButton orderId={order.id} />
+          )}
         </div>
       </div>
 
