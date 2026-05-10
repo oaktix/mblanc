@@ -12,6 +12,19 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type");
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
+
+  let where: any = {};
+  if (from || to) {
+    where.createdAt = {};
+    if (from) where.createdAt.gte = new Date(from);
+    if (to) {
+      const toDate = new Date(to);
+      toDate.setHours(23, 59, 59, 999);
+      where.createdAt.lte = toDate;
+    }
+  }
 
   let data: any[] = [];
   let filename = "export.csv";
@@ -19,19 +32,21 @@ export async function GET(request: Request) {
   try {
     if (type === "products") {
       data = await prisma.product.findMany({
+        where,
         select: { id: true, name: true, sku: true, category: true, basePrice: true, stock: true, status: true, createdAt: true },
         orderBy: { createdAt: "desc" },
       });
       filename = "mblanc_products.csv";
     } else if (type === "orders") {
       data = await prisma.order.findMany({
+        where,
         select: { id: true, total: true, paymentStatus: true, status: true, userId: true, createdAt: true },
         orderBy: { createdAt: "desc" },
       });
       filename = "mblanc_orders.csv";
     } else if (type === "customers") {
       data = await prisma.user.findMany({
-        where: { role: "CUSTOMER" },
+        where: { ...where, role: "CUSTOMER" },
         select: { id: true, name: true, email: true, createdAt: true },
         orderBy: { createdAt: "desc" },
       });

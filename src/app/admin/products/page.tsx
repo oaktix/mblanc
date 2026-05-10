@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { Suspense } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import DeleteProductButton from "@/components/admin/DeleteProductButton";
+import ExportButton from "@/components/admin/ExportButton";
 
 export const unstable_instant = { prefetch: "static" };
 
@@ -45,7 +46,7 @@ export default function AdminProductsPage() {
             />
           </div>
           <div className="flex gap-4">
-             <a href="/api/admin/export?type=products" download className="text-sm font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors">Export CSV</a>
+             <ExportButton type="products" />
           </div>
         </div>
 

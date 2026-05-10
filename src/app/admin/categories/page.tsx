@@ -11,6 +11,9 @@ export default function AdminCategoriesPage() {
   const [newImage, setNewImage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editImage, setEditImage] = useState("");
 
   const fetchCategories = async () => {
     const res = await fetch("/api/admin/categories");
@@ -51,6 +54,37 @@ export default function AdminCategoriesPage() {
     if (!confirm("Delete this category? Products using it will keep their category label.")) return;
     await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
     await fetchCategories();
+  };
+
+  const handleEdit = (cat: any) => {
+    setEditingCategory(cat.id);
+    setEditName(cat.name);
+    setEditImage(cat.image || "");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editName.trim()) return;
+    setSaving(true);
+    await fetch(`/api/admin/categories/${editingCategory}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: editName, image: editImage }),
+    });
+    setEditingCategory(null);
+    await fetchCategories();
+    setSaving(false);
+  };
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    const data = await res.json();
+    if (data.url) setEditImage(data.url);
+    setUploading(false);
   };
 
   return (
@@ -105,17 +139,78 @@ export default function AdminCategoriesPage() {
           ) : (
             <div className="divide-y divide-gray-50 dark:divide-gray-900">
               {categories.map(cat => (
-                <div key={cat.id} className="flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 dark:hover:bg-black/20 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden border border-gold/10 bg-cream dark:bg-black flex items-center justify-center">
-                      {cat.image ? <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" /> : <span className="text-[10px] text-gray-300 italic">No img</span>}
+                <div key={cat.id} className="flex flex-col hover:bg-gray-50/50 dark:hover:bg-black/20 transition-colors">
+                  <div className="flex items-center justify-between px-6 py-4">
+                    <div className="flex items-center gap-4 flex-1">
+                      {editingCategory === cat.id ? (
+                        <div className="flex flex-col sm:flex-row gap-4 w-full items-start sm:items-center">
+                          <div className="relative group">
+                            <div className="w-16 h-16 rounded-lg overflow-hidden border border-gold/40 bg-cream dark:bg-black flex items-center justify-center">
+                              {editImage ? (
+                                <img src={editImage} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <ImagePlus size={20} className="text-gray-300" />
+                              )}
+                            </div>
+                            <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-lg">
+                              <ImagePlus size={16} className="text-white" />
+                              <input type="file" accept="image/*" onChange={handleEditImageUpload} className="hidden" />
+                            </label>
+                          </div>
+                          <div className="flex-1 w-full">
+                            <input
+                              type="text"
+                              value={editName}
+                              onChange={e => setEditName(e.target.value)}
+                              className="w-full px-3 py-2 border border-gold rounded-lg bg-white dark:bg-black text-sm focus:outline-none"
+                              autoFocus
+                            />
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={handleSaveEdit}
+                                disabled={saving || !editName.trim()}
+                                className="text-[10px] font-bold uppercase tracking-widest text-green-600 hover:text-green-700 disabled:opacity-50"
+                              >
+                                {saving ? "Saving..." : "Save Changes"}
+                              </button>
+                              <button
+                                onClick={() => setEditingCategory(null)}
+                                className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-gray-600"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="w-12 h-12 rounded-lg overflow-hidden border border-gold/10 bg-cream dark:bg-black flex items-center justify-center">
+                            {cat.image ? <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" /> : <span className="text-[10px] text-gray-300 italic">No img</span>}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm text-charcoal dark:text-ivory">{cat.name}</p>
+                            <p className="text-[10px] text-gray-400 font-mono">{cat.slug}</p>
+                          </div>
+                        </>
+                      )}
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm text-charcoal dark:text-ivory">{cat.name}</p>
-                      <p className="text-[10px] text-gray-400 font-mono">{cat.slug}</p>
-                    </div>
+                    {editingCategory !== cat.id && (
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleEdit(cat)} 
+                          className="p-2 text-gray-400 hover:text-gold transition-colors text-xs font-bold uppercase tracking-widest"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(cat.id)} 
+                          className="p-2 text-gray-400 hover:text-burgundy transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <button onClick={() => handleDelete(cat.id)} className="p-2 text-gray-400 hover:text-burgundy transition-colors"><Trash2 size={16} /></button>
                 </div>
               ))}
             </div>

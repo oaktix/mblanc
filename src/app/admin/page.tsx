@@ -4,6 +4,7 @@ import AdminLoginForm from "@/components/admin/AdminLoginForm";
 import prisma from "@/lib/prisma";
 import { TrendingUp, ShoppingBag, Users, Package2, ArrowUpRight } from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
+import ExportButton from "@/components/admin/ExportButton";
 import { Suspense } from "react";
 
 export const unstable_instant = { prefetch: "static" };
@@ -89,9 +90,7 @@ async function DashboardContent() {
           <a href="/admin/orders" className="px-5 py-2.5 bg-white dark:bg-charcoal border border-gray-200 dark:border-gray-800 text-charcoal dark:text-ivory font-medium rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50 transition-all">
             Manage Orders
           </a>
-          <a href="/api/admin/export?type=orders" download className="px-5 py-2.5 bg-gold text-black font-bold rounded-lg text-sm flex items-center gap-2 hover:bg-black hover:text-gold transition-all shadow-sm">
-            Export Reports <ArrowUpRight size={16} />
-          </a>
+          <ExportButton type="orders" />
         </div>
       </div>
 

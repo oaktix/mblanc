@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Search, Eye, Filter, Download } from "lucide-react";
 import { Suspense } from "react";
 import AdminShell from "@/components/admin/AdminShell";
+import ExportButton from "@/components/admin/ExportButton";
 
 export const unstable_instant = { prefetch: "static" };
 
@@ -16,10 +17,7 @@ export default function AdminOrdersPage() {
           <p className="text-gray-500 font-light mt-1">Track and manage bespoke requests and store orders.</p>
         </div>
         <div className="flex gap-4">
-          <a href="/api/admin/export?type=orders" download className="px-6 py-2 bg-white dark:bg-charcoal border border-gray-200 dark:border-gray-800 text-charcoal dark:text-ivory font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50 transition-all">
-            <Download size={18} />
-            Export
-          </a>
+          <ExportButton type="orders" />
         </div>
       </div>
 
