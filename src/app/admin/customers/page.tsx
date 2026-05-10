@@ -1,9 +1,10 @@
 import prisma from "@/lib/prisma";
-import { Search, Mail, Phone, Calendar, ShoppingBag } from "lucide-react";
+import { Search, Mail, Phone, Calendar, ShoppingBag, Trash2, Loader2 } from "lucide-react";
 import { Suspense } from "react";
 import EditUserModal from "@/components/admin/EditUserModal";
 import AdminShell from "@/components/admin/AdminShell";
 import ExportButton from "@/components/admin/ExportButton";
+import DeleteCustomerButton from "@/components/admin/DeleteCustomerButton";
 import { headers } from "next/headers";
 
 export const unstable_instant = { prefetch: "static" };
@@ -110,19 +111,24 @@ async function CustomersList() {
             ₦{customer.orders.reduce((acc, o) => acc + o.total, 0).toLocaleString()}
           </td>
           <td className="px-6 py-4 text-right">
-            <EditUserModal 
-              user={{
-                id: customer.id,
-                name: customer.name,
-                email: customer.email,
-                role: customer.role,
-              }}
-              triggerComponent={
-                <button className="text-[10px] uppercase tracking-widest font-bold text-gold hover:text-black dark:hover:text-ivory transition-colors">
-                  Edit Profile
-                </button>
-              }
-            />
+            <div className="flex justify-end items-center gap-4">
+              <EditUserModal 
+                user={{
+                  id: customer.id,
+                  name: customer.name,
+                  email: customer.email,
+                  role: customer.role,
+                }}
+                triggerComponent={
+                  <button className="text-[10px] uppercase tracking-widest font-bold text-gold hover:text-black dark:hover:text-ivory transition-colors">
+                    Edit Profile
+                  </button>
+                }
+              />
+              {customer.role !== "ADMIN" && (
+                <DeleteCustomerButton customerId={customer.id} />
+              )}
+            </div>
           </td>
         </tr>
       ))}
