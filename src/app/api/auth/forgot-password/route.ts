@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     // Send email
     try {
       const { data, error } = await resend.emails.send({
-        from: "MBLANC Atelier <onboarding@resend.dev>",
+        from: "MBLANC Atelier <security@mblancfits.com>",
         to: email,
         subject: "Security: Password Reset Request",
         html: `
