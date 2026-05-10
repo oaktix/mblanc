@@ -20,7 +20,6 @@ export async function generateMetadata({
     openGraph: {
       title: `${title} | MBlanc Bespoke`,
       description,
-      images: ["/images/shop.jpg"],
     },
   };
 }

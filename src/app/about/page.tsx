@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   openGraph: {
     title: "About MBlanc Bespoke | Luxury Tailoring Abuja",
     description: "Handcrafting excellence for the modern gentleman since inception.",
-    images: ["/images/about-portrait.jpg"],
   },
 };
 

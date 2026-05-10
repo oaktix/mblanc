@@ -5,6 +5,12 @@ import prisma from "@/lib/prisma";
 export const metadata: Metadata = {
   title: "MBlanc Bespoke | Luxury Menswear & Custom Tailoring",
   description: "Nigeria's premier destination for custom-tailored luxury menswear. From regal Agbadas to sophisticated corporate suits, we craft garments for the gentleman who commands presence.",
+  openGraph: {
+    images: ["/images/hero-agbada.jpg"],
+  },
+  twitter: {
+    images: ["/images/hero-agbada.jpg"],
+  },
 };
 
 export default async function Home() {

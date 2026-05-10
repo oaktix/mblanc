@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     siteName: "MBlanc Bespoke",
     images: [
       {
-        url: "/images/hero-agbada.jpg",
+        url: "/images/breadcrumbs.jpg",
         width: 1200,
         height: 630,
         alt: "MBlanc Bespoke Luxury Menswear",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MBlanc Bespoke | Luxury Menswear",
     description: "Handcrafted sartorial excellence for the modern gentleman.",
-    images: ["/images/hero-agbada.jpg"],
+    images: ["/images/breadcrumbs.jpg"],
   },
 };
 

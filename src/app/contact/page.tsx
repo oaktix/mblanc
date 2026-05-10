@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Contact MBlanc Bespoke | Sartorial Excellence",
     description: "Book your private fitting appointment at our Abuja atelier.",
-    images: ["/images/perfection.jpg"],
   },
 };
 
