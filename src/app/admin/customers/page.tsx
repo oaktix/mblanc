@@ -65,6 +65,7 @@ export default function AdminCustomersPage() {
 async function CustomersList() {
   await headers(); // Opt-out of static optimization
   const customers = await prisma.user.findMany({
+    where: { role: "CUSTOMER" },
     include: {
       orders: true,
     },

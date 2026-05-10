@@ -48,7 +48,7 @@ async function DashboardContent() {
   ] = await Promise.all([
     prisma.order.aggregate({ _sum: { total: true }, where: { paymentStatus: "SUCCESS" } }),
     prisma.order.count({ where: { paymentStatus: "SUCCESS" } }),
-    prisma.user.count(),
+    prisma.user.count({ where: { role: "CUSTOMER" } }),
     prisma.product.count(),
     prisma.order.findMany({
       take: 5,
@@ -82,10 +82,10 @@ async function DashboardContent() {
       where: { paymentStatus: "SUCCESS", createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } 
     }),
     prisma.user.count({ 
-      where: { createdAt: { gte: thirtyDaysAgo } } 
+      where: { role: "CUSTOMER", createdAt: { gte: thirtyDaysAgo } } 
     }),
     prisma.user.count({ 
-      where: { createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } 
+      where: { role: "CUSTOMER", createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } 
     })
   ]);
 
