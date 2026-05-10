@@ -198,7 +198,16 @@ async function DashboardContent() {
                     className="w-full max-w-[40px] bg-gold rounded-t-lg transition-all duration-700 ease-out hover:brightness-110 cursor-pointer relative group"
                     style={{ height: `${Math.max(height, 5)}%` }}
                   >
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-[10px] p-2 rounded shadow-xl whitespace-nowrap z-10 pointer-events-none">
+                    {data.value > 0 && (
+                      <span className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 text-[9px] font-bold text-gray-500 whitespace-nowrap">
+                        {data.value >= 1000000 
+                          ? `₦${(data.value / 1000000).toFixed(1)}m` 
+                          : data.value >= 1000 
+                            ? `₦${(data.value / 1000).toFixed(1)}k` 
+                            : `₦${data.value}`}
+                      </span>
+                    )}
+                    <div className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-[10px] p-2 rounded shadow-xl whitespace-nowrap z-10 pointer-events-none">
                       <p className="font-bold border-b border-white/20 pb-1 mb-1">Total: ₦{data.value.toLocaleString()}</p>
                       <p className="text-gold">POS: ₦{data.pos.toLocaleString()}</p>
                       <p className="text-blue-400">Web: ₦{data.web.toLocaleString()}</p>
