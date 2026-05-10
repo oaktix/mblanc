@@ -89,7 +89,7 @@ async function CustomersList() {
               </div>
               <div className="flex items-center gap-2 text-[10px] text-gray-400">
                 <Phone size={12} />
-                Not provided
+                {customer.phone || "Not provided"}
               </div>
             </div>
           </td>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, ShoppingCart, User, CreditCard, Banknote, Trash2, Download, CheckCircle2, Printer, Mail, Loader2 } from "lucide-react";
+import { Search, ShoppingCart, User, Phone, CreditCard, Banknote, Trash2, Download, CheckCircle2, Printer, Mail, Loader2 } from "lucide-react";
 import POSPrintReceipt from "@/components/admin/POSPrintReceipt";
 import AdminShell from "@/components/admin/AdminShell";
 
@@ -10,6 +10,8 @@ export default function POSPage() {
   const [cart, setCart] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [discount, setDiscount] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -62,6 +64,8 @@ export default function POSPage() {
           total,
           discount: Number(discount) || 0,
           customerName,
+          customerEmail,
+          customerPhone,
           paymentMethod
         })
       });
@@ -83,6 +87,8 @@ export default function POSPage() {
       
       setCart([]);
       setCustomerName("");
+      setCustomerEmail("");
+      setCustomerPhone("");
       setDiscount(0);
     } catch (error: any) {
       alert(error.message);
@@ -245,6 +251,34 @@ export default function POSPage() {
                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:border-gold"
                      value={customerName}
                      onChange={(e) => setCustomerName(e.target.value)}
+                   />
+                </div>
+             </div>
+
+             <div>
+                <label className="block text-[10px] uppercase tracking-widest text-gray-400 mb-2 font-bold">Email Address (Optional)</label>
+                <div className="relative">
+                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                   <input 
+                     type="email" 
+                     placeholder="client@mblanc.com"
+                     className="w-full pl-10 pr-4 py-2 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:border-gold"
+                     value={customerEmail}
+                     onChange={(e) => setCustomerEmail(e.target.value)}
+                   />
+                </div>
+             </div>
+
+             <div>
+                <label className="block text-[10px] uppercase tracking-widest text-gray-400 mb-2 font-bold">Phone Number (Optional)</label>
+                <div className="relative">
+                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                   <input 
+                     type="tel" 
+                     placeholder="+234..."
+                     className="w-full pl-10 pr-4 py-2 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:border-gold"
+                     value={customerPhone}
+                     onChange={(e) => setCustomerPhone(e.target.value)}
                    />
                 </div>
              </div>
