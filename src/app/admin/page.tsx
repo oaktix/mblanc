@@ -28,7 +28,24 @@ async function DashboardContent() {
     return <AdminLoginForm />;
   }
 
-  const [totalRevenue, totalOrders, totalCustomers, totalProducts, recentOrders, latestProducts, dailySales] = await Promise.all([
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+
+  const [
+    totalRevenue, 
+    totalOrders, 
+    totalCustomers, 
+    totalProducts, 
+    recentOrders, 
+    latestProducts, 
+    dailySales,
+    revenueThisMonth,
+    revenueLastMonth,
+    ordersThisMonth,
+    ordersLastMonth,
+    customersThisMonth,
+    customersLastMonth
+  ] = await Promise.all([
     prisma.order.aggregate({ _sum: { total: true }, where: { paymentStatus: "SUCCESS" } }),
     prisma.order.count({ where: { paymentStatus: "SUCCESS" } }),
     prisma.user.count({ where: { role: "CUSTOMER" } }),
@@ -42,19 +59,45 @@ async function DashboardContent() {
       take: 5,
       orderBy: { createdAt: "desc" }
     }),
-    // Fetch all successful orders for last 7 days for the chart
     prisma.order.findMany({
       where: { 
         paymentStatus: "SUCCESS",
         createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
       },
-      select: {
-        total: true,
-        createdAt: true,
-        shippingDetails: true
-      }
+      select: { total: true, createdAt: true, shippingDetails: true }
+    }),
+    // Growth metrics
+    prisma.order.aggregate({ 
+      _sum: { total: true }, 
+      where: { paymentStatus: "SUCCESS", createdAt: { gte: thirtyDaysAgo } } 
+    }),
+    prisma.order.aggregate({ 
+      _sum: { total: true }, 
+      where: { paymentStatus: "SUCCESS", createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } 
+    }),
+    prisma.order.count({ 
+      where: { paymentStatus: "SUCCESS", createdAt: { gte: thirtyDaysAgo } } 
+    }),
+    prisma.order.count({ 
+      where: { paymentStatus: "SUCCESS", createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } 
+    }),
+    prisma.user.count({ 
+      where: { role: "CUSTOMER", createdAt: { gte: thirtyDaysAgo } } 
+    }),
+    prisma.user.count({ 
+      where: { role: "CUSTOMER", createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } 
     })
   ]);
+
+  const calculateGrowth = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? "+100%" : "0%";
+    const growth = ((current - previous) / previous) * 100;
+    return `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%`;
+  };
+
+  const revenueGrowth = calculateGrowth(revenueThisMonth._sum.total || 0, revenueLastMonth._sum.total || 0);
+  const ordersGrowth = calculateGrowth(ordersThisMonth, ordersLastMonth);
+  const customersGrowth = calculateGrowth(customersThisMonth, customersLastMonth);
 
   // Process daily sales for the chart with source breakdown
   const last7Days = [...Array(7)].map((_, i) => {
@@ -90,9 +133,9 @@ async function DashboardContent() {
   });
 
   const STATS = [
-    { name: "Total Revenue", value: `₦${(totalRevenue._sum.total || 0).toLocaleString()}`, icon: TrendingUp, change: "+0%", color: "text-green-600" },
-    { name: "Total Orders", value: totalOrders.toString(), icon: ShoppingBag, change: "+0%", color: "text-blue-600" },
-    { name: "Active Customers", value: totalCustomers.toString(), icon: Users, change: "+0%", color: "text-purple-600" },
+    { name: "Total Revenue", value: `₦${(totalRevenue._sum.total || 0).toLocaleString()}`, icon: TrendingUp, change: revenueGrowth, color: revenueGrowth.startsWith('+') ? "text-green-600" : "text-red-600" },
+    { name: "Total Orders", value: totalOrders.toString(), icon: ShoppingBag, change: ordersGrowth, color: ordersGrowth.startsWith('+') ? "text-blue-600" : "text-red-600" },
+    { name: "Active Customers", value: totalCustomers.toString(), icon: Users, change: customersGrowth, color: customersGrowth.startsWith('+') ? "text-purple-600" : "text-red-600" },
     { name: "Total Products", value: totalProducts.toString(), icon: Package2, change: "0%", color: "text-amber-600" },
   ];
 
