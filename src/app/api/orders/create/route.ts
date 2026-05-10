@@ -7,13 +7,23 @@ export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
         const body = await req.json();
-        const { items, total, discount, couponCode, shippingDetails } = body;
+        const { items, total, discount, couponCode, shippingDetails, notes } = body;
 
         if (!items || items.length === 0) {
             return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
         }
 
-        // 1. Handle Guest User Storage
+        // 1. Validate all products exist before starting transaction
+        for (const item of items) {
+            const product = await prisma.product.findUnique({
+                where: { id: String(item.id).replace(/-+$/, "").trim() }
+            });
+            if (!product) {
+                return NextResponse.json({ error: `Product "${item.name}" is no longer available. Please clear your cart.` }, { status: 400 });
+            }
+        }
+
+        // 2. Handle User (Guest or Authenticated)
         let finalUserId = session?.user?.id || null;
 
         if (!finalUserId && shippingDetails?.email) {
@@ -34,7 +44,7 @@ export async function POST(req: Request) {
             finalUserId = guestUser.id;
         }
 
-        // 2. Create the parent Order record
+        // 3. Create Order
         const order = await prisma.order.create({
             data: {
                 total: total,
@@ -43,29 +53,29 @@ export async function POST(req: Request) {
                 status: "PENDING",
                 paymentStatus: "PENDING",
                 shippingDetails: shippingDetails,
+                notes: notes || null,
                 userId: finalUserId,
             },
         });
 
-        // 3. Increment coupon usage if applicable
+        // 4. Update Coupon (if valid)
         if (couponCode) {
-            await prisma.coupon.update({
-                where: { code: couponCode },
-                data: { usageCount: { increment: 1 } }
-            }).catch(() => {}); // Silently fail if coupon doesn't exist (shouldn't happen)
+            try {
+                await prisma.coupon.update({
+                    where: { code: couponCode },
+                    data: { usageCount: { increment: 1 } }
+                });
+            } catch (e) {
+                console.warn("Coupon update failed (might be invalid code):", couponCode);
+            }
         }
 
-
-        // 2. Create OrderItems one by one to ensure ID sanitization
+        // 5. Create OrderItems
         for (const item of items) {
-            // CLEANING: Strip the "--" or any trailing hyphens found in your logs
             const cleanProductId = String(item.id).replace(/-+$/, "").trim();
-
-            // Clean variationId if it exists, otherwise keep as null
             const cleanVariationId = item.variationId
                 ? String(item.variationId).replace(/-+$/, "").trim()
                 : null;
-
 
             await prisma.orderItem.create({
                 data: {
@@ -73,7 +83,6 @@ export async function POST(req: Request) {
                     productId: cleanProductId,
                     quantity: Number(item.quantity),
                     price: Number(item.price),
-                    // Only connect variation if the cleaned string is valid
                     ...(cleanVariationId && cleanVariationId !== ""
                         ? { variationId: cleanVariationId }
                         : {}),
@@ -81,15 +90,12 @@ export async function POST(req: Request) {
             });
         }
 
-        // 3. Return the order ID to the frontend so it can initialize Paystack
         return NextResponse.json({ id: order.id }, { status: 201 });
 
     } catch (error: any) {
         console.error(">>> [ORDER_CREATE] CRITICAL ERROR:", error);
-
-        // Return the specific error message to help you debug in the browser console
         return NextResponse.json(
-            { error: "Failed to initialize checkout" },
+            { error: "Failed to create order. Please check your network or cart items.", details: error.message },
             { status: 500 }
         );
     }

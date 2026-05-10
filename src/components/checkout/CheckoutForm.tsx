@@ -4,7 +4,7 @@ import { useCartStore } from "@/store/useCartStore";
 import { useState, useEffect } from "react";
 import { usePaystackPayment } from "react-paystack";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, MessageSquare } from "lucide-react";
 
 export default function CheckoutForm() {
   const { items, getTotalPrice, clearCart } = useCartStore();
@@ -15,6 +15,7 @@ export default function CheckoutForm() {
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
+  const [notes, setNotes] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   
   // Coupon State
@@ -97,13 +98,14 @@ export default function CheckoutForm() {
           total: total,
           discount: discount,
           couponCode: appliedCoupon?.code || null,
-          shippingDetails: { name, email, phone, address, city }
+          shippingDetails: { name, email, phone, address, city },
+          notes: notes
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.details || "Failed to create order");
+        throw new Error(errorData.details || errorData.error || "Failed to create order");
       }
 
       const orderData = await response.json();
@@ -183,6 +185,19 @@ export default function CheckoutForm() {
               required
               className="w-full bg-transparent border-b border-gray-300 dark:border-gray-800 py-3 focus:outline-none focus:border-gold transition-colors font-light"
               placeholder="House Number, Street, District"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">
+              <MessageSquare size={12} /> Special Instructions / Notes
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className="w-full bg-gray-50 dark:bg-zinc-900/30 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3 focus:outline-none focus:border-gold transition-colors font-light text-sm resize-none"
+              placeholder="E.g. I prefer the fit extra slim at the waist..."
             />
           </div>
 
