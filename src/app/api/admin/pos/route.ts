@@ -13,7 +13,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { items, total, customerName, paymentMethod } = body;
+        const { items, total, discount, customerName, paymentMethod } = body;
 
         if (!items || items.length === 0) {
             return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -23,6 +23,7 @@ export async function POST(req: Request) {
         const order = await prisma.order.create({
             data: {
                 total: total,
+                discount: discount || 0,
                 status: "DELIVERED", // POS sales are usually delivered immediately
                 paymentStatus: "SUCCESS",
                 paystackRef: `POS-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,

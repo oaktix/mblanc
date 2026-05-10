@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, ShoppingCart, User, CreditCard, Banknote, Trash2, Download, CheckCircle2, Printer } from "lucide-react";
+import { Search, ShoppingCart, User, CreditCard, Banknote, Trash2, Download, CheckCircle2, Printer, Mail, Loader2 } from "lucide-react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { POSReceipt } from "@/components/admin/POSReceipt";
 import POSPrintReceipt from "@/components/admin/POSPrintReceipt";
@@ -13,7 +13,9 @@ export default function POSPage() {
   const [search, setSearch] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [discount, setDiscount] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<any>(null);
 
   useEffect(() => {
@@ -45,7 +47,8 @@ export default function POSPage() {
     setCart(cart.filter(item => item.id !== id));
   };
 
-  const total = cart.reduce((acc, item) => acc + item.basePrice * item.quantity, 0);
+  const subtotal = cart.reduce((acc, item) => acc + item.basePrice * item.quantity, 0);
+  const total = Math.max(0, subtotal - (Number(discount) || 0));
 
   const handleCheckout = async () => {
     if (cart.length === 0 || !customerName) return;
@@ -59,6 +62,7 @@ export default function POSPage() {
         body: JSON.stringify({
           items: cart,
           total,
+          discount: Number(discount) || 0,
           customerName,
           paymentMethod
         })
@@ -75,11 +79,13 @@ export default function POSPage() {
         customerName,
         items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.basePrice })),
         total,
+        discount: Number(discount) || 0,
         paymentMethod
       });
       
       setCart([]);
       setCustomerName("");
+      setDiscount(0);
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -87,33 +93,69 @@ export default function POSPage() {
     }
   };
 
+  const handleSendEmail = async () => {
+    const email = prompt("Enter customer email address:");
+    if (!email || !completedOrder) return;
+    
+    setSendingEmail(true);
+    try {
+      const res = await fetch("/api/admin/pos/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          ...completedOrder
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        alert("Digital receipt sent successfully to " + email);
+      } else {
+        throw new Error(data.error || "Failed to send email");
+      }
+    } catch (error: any) {
+      alert("Error: " + error.message);
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   if (completedOrder) {
     return (
       <AdminShell>
         <div className="flex flex-col items-center justify-center min-h-[70vh] bg-white dark:bg-charcoal p-12 rounded-2xl shadow-xl border border-gold/20">
-          <CheckCircle2 size={80} className="text-green-500 mb-6" />
-          <h2 className="text-3xl font-serif mb-4">Sale Completed</h2>
-          <p className="text-gray-500 mb-10">The transaction has been recorded successfully.</p>
+          <div className="relative mb-8">
+            <CheckCircle2 size={100} className="text-green-500" />
+            <div className="absolute -inset-4 border border-green-500/20 rounded-full animate-ping pointer-events-none"></div>
+          </div>
+          <h2 className="text-3xl font-serif mb-2 text-charcoal dark:text-ivory">Sale Successful</h2>
+          <p className="text-gray-500 mb-10 font-light">Transaction #{completedOrder.orderId.slice(-6).toUpperCase()} has been finalized.</p>
           
-          <div className="flex flex-wrap justify-center gap-4">
-             <button 
-               onClick={() => window.print()}
-               className="px-8 py-4 bg-charcoal text-white font-bold rounded-lg flex items-center gap-2 hover:bg-black transition-all"
-             >
-               <Printer size={18} /> Direct Print
-             </button>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-md">
              <PDFDownloadLink 
                document={<POSReceipt {...completedOrder} />} 
-               fileName={`receipt-${completedOrder.orderId}.pdf`}
-               className="px-8 py-4 bg-burgundy text-white font-bold rounded-lg flex items-center gap-2 hover:bg-black transition-all"
+               fileName={`mblanc-receipt-${completedOrder.orderId.slice(-6).toUpperCase()}.pdf`}
+               className="w-full px-8 py-4 bg-burgundy text-white font-bold rounded-xl flex items-center justify-center gap-3 hover:bg-black transition-all shadow-lg"
              >
-               {({ loading }) => (loading ? "Generating PDF..." : <><Download size={18} /> Download PDF</>)}
+               {({ loading }) => (loading ? <><Loader2 className="animate-spin" size={20} /> Generating...</> : <><Download size={20} /> Download Receipt</>)}
              </PDFDownloadLink>
+
+             <button 
+               onClick={handleSendEmail}
+               disabled={sendingEmail}
+               className="w-full px-8 py-4 bg-white dark:bg-charcoal border border-gray-200 dark:border-gray-800 text-charcoal dark:text-ivory font-bold rounded-xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50"
+             >
+               {sendingEmail ? (
+                 <><Loader2 className="animate-spin" size={20} /> Sending...</>
+               ) : (
+                 <><Mail size={20} className="text-gold" /> Send via Mail</>
+               )}
+             </button>
              
              <button 
                onClick={() => setCompletedOrder(null)}
-               className="px-8 py-4 border border-gray-200 dark:border-gray-800 rounded-lg font-bold hover:bg-gray-50 transition-all"
+               className="w-full md:col-span-2 px-8 py-4 border border-gold text-gold font-bold rounded-xl hover:bg-gold hover:text-black transition-all mt-4"
              >
                New Transaction
              </button>
@@ -211,6 +253,20 @@ export default function POSPage() {
              </div>
 
              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-gray-400 mb-2 font-bold">Manual Discount (NGN)</label>
+                <div className="relative">
+                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">₦</span>
+                   <input 
+                     type="number" 
+                     placeholder="0.00"
+                     className="w-full pl-8 pr-4 py-2 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:border-gold"
+                     value={discount || ""}
+                     onChange={(e) => setDiscount(Number(e.target.value))}
+                   />
+                </div>
+             </div>
+
+             <div>
                 <label className="block text-[10px] uppercase tracking-widest text-gray-400 mb-2 font-bold">Payment Method</label>
                 <div className="flex gap-2">
                    <button 
@@ -235,9 +291,21 @@ export default function POSPage() {
              </div>
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-800">
-             <span className="text-gray-500 text-sm font-bold uppercase tracking-widest">Total</span>
-             <span className="text-2xl font-serif text-burgundy">₦{total.toLocaleString()}</span>
+          <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-gray-800">
+             <div className="flex justify-between items-center text-gray-500 text-xs font-medium">
+                <span>Subtotal</span>
+                <span>₦{subtotal.toLocaleString()}</span>
+             </div>
+             {discount > 0 && (
+               <div className="flex justify-between items-center text-green-600 text-xs font-bold">
+                  <span>Discount</span>
+                  <span>- ₦{discount.toLocaleString()}</span>
+               </div>
+             )}
+             <div className="flex justify-between items-center pt-2">
+                <span className="text-gray-500 text-sm font-bold uppercase tracking-widest">Total</span>
+                <span className="text-2xl font-serif text-burgundy">₦{total.toLocaleString()}</span>
+             </div>
           </div>
 
           <button 

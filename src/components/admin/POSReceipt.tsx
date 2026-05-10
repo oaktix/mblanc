@@ -86,11 +86,15 @@ interface ReceiptProps {
   customerName: string;
   items: any[];
   total: number;
+  discount?: number;
   paymentMethod: string;
 }
 
-export const POSReceipt = ({ orderId, customerName, items, total, paymentMethod }: ReceiptProps) => (
-  <Document>
+export const POSReceipt = ({ orderId, customerName, items, total, discount = 0, paymentMethod }: ReceiptProps) => {
+  const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+  return (
+    <Document>
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
         <Text style={styles.title}>MBlanc Bespoke</Text>
@@ -127,6 +131,19 @@ export const POSReceipt = ({ orderId, customerName, items, total, paymentMethod 
         ))}
       </View>
 
+      <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#F0F0F0" }}>
+        <View style={styles.row}>
+          <Text>Subtotal:</Text>
+          <Text>₦{subtotal.toLocaleString()}</Text>
+        </View>
+        {discount > 0 && (
+          <View style={styles.row}>
+            <Text style={{ color: "#4caf50", fontWeight: "bold" }}>Discount:</Text>
+            <Text style={{ color: "#4caf50", fontWeight: "bold" }}>- ₦{discount.toLocaleString()}</Text>
+          </View>
+        )}
+      </View>
+
       <View style={styles.totalRow}>
         <Text style={styles.totalText}>GRAND TOTAL</Text>
         <Text style={styles.totalText}>₦{total.toLocaleString()}</Text>
@@ -138,4 +155,5 @@ export const POSReceipt = ({ orderId, customerName, items, total, paymentMethod 
       </View>
     </Page>
   </Document>
-);
+  );
+};

@@ -5,10 +5,12 @@ interface Props {
   customerName: string;
   items: any[];
   total: number;
+  discount?: number;
   paymentMethod: string;
 }
 
-export default function POSPrintReceipt({ orderId, customerName, items, total, paymentMethod }: Props) {
+export default function POSPrintReceipt({ orderId, customerName, items, total, discount = 0, paymentMethod }: Props) {
+  const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   return (
     <div id="pos-receipt-print" className="hidden print:block p-8 bg-white text-black font-serif text-sm">
       <div className="text-center mb-6 border-b-2 border-black pb-4">
@@ -48,6 +50,19 @@ export default function POSPrintReceipt({ orderId, customerName, items, total, p
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="space-y-1 mb-4">
+        <div className="flex justify-between text-[12px]">
+          <span>Subtotal:</span>
+          <span>₦{subtotal.toLocaleString()}</span>
+        </div>
+        {discount > 0 && (
+          <div className="flex justify-between text-[12px] font-bold">
+            <span>Discount:</span>
+            <span>- ₦{discount.toLocaleString()}</span>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-between items-center text-xl font-bold border-b-2 border-black pb-4 mb-6">
