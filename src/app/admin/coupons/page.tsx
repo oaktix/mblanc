@@ -8,7 +8,7 @@ export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingCoupon, setEditingCoupon] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     code: "",
@@ -26,15 +26,12 @@ export default function AdminCouponsPage() {
     try {
       const res = await fetch("/api/admin/coupons");
       const data = await res.json();
-      // Defensive check: Ensure data is an array
       if (Array.isArray(data)) {
         setCoupons(data);
       } else {
-        console.error("API did not return an array:", data);
         setCoupons([]);
       }
     } catch (err) {
-      console.error("Failed to fetch coupons:", err);
       setCoupons([]);
     } finally {
       setLoading(false);
@@ -43,17 +40,22 @@ export default function AdminCouponsPage() {
 
   useEffect(() => { fetchCoupons(); }, []);
 
-  const handleAdd = async (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/coupons", {
-        method: "POST",
+      const url = editingCoupon ? `/api/admin/coupons/${editingCoupon.id}` : "/api/admin/coupons";
+      const method = editingCoupon ? "PATCH" : "POST";
+      
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
+
       if (res.ok) {
         setIsAdding(false);
+        setEditingCoupon(null);
         setFormData({
           code: "",
           type: "PERCENTAGE",
@@ -74,6 +76,21 @@ export default function AdminCouponsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEdit = (coupon: any) => {
+    setEditingCoupon(coupon);
+    setFormData({
+      code: coupon.code,
+      type: coupon.type,
+      value: coupon.value,
+      scope: coupon.scope,
+      minPurchase: coupon.minPurchase || 0,
+      maxPurchase: coupon.maxPurchase || 0,
+      maxUsages: coupon.maxUsages || 0,
+      expiresAt: coupon.expiresAt ? new Date(coupon.expiresAt).toISOString().split('T')[0] : "",
+    });
+    setIsAdding(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -111,7 +128,14 @@ export default function AdminCouponsPage() {
             </p>
           </div>
           <button 
-            onClick={() => setIsAdding(!isAdding)}
+            onClick={() => {
+              if (isAdding) {
+                setIsAdding(false);
+                setEditingCoupon(null);
+              } else {
+                setIsAdding(true);
+              }
+            }}
             className="w-full md:w-auto px-8 py-3 bg-burgundy text-white font-bold rounded-lg text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg"
           >
             {isAdding ? <X size={18} /> : <Plus size={18} />}
@@ -121,11 +145,20 @@ export default function AdminCouponsPage() {
 
         {isAdding && (
           <div className="bg-white dark:bg-charcoal rounded-xl border border-gold/10 p-8 mb-10 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
-            <h3 className="text-lg font-serif mb-8 italic border-b border-gold/10 pb-4">Create Master Coupon</h3>
-            <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <h3 className="text-lg font-serif mb-8 italic border-b border-gold/10 pb-4">
+              {editingCoupon ? `Edit Coupon: ${editingCoupon.code}` : "Create Master Coupon"}
+            </h3>
+            <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
               <div className="space-y-2">
                 <label className="block text-[10px] uppercase tracking-widest text-gray-500 font-bold">Coupon Code</label>
-                <input required value={formData.code} onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})} placeholder="E.G. ATELIER25" className="w-full px-4 py-3 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg text-sm outline-none focus:border-gold font-mono" />
+                <input 
+                  required 
+                  value={formData.code} 
+                  onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})} 
+                  placeholder="E.G. ATELIER25" 
+                  disabled={!!editingCoupon}
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg text-sm outline-none focus:border-gold font-mono disabled:opacity-50" 
+                />
               </div>
               <div className="space-y-2">
                 <label className="block text-[10px] uppercase tracking-widest text-gray-500 font-bold">Type</label>
@@ -158,7 +191,7 @@ export default function AdminCouponsPage() {
               </div>
               <div className="md:col-span-4 flex justify-end gap-4 mt-4">
                 <button type="submit" className="px-12 py-4 bg-gold text-black font-bold rounded-lg text-xs uppercase tracking-[0.2em] hover:bg-black hover:text-white transition-all shadow-xl">
-                  {loading ? <Loader2 className="animate-spin" /> : "Save Promotional Code"}
+                  {loading ? <Loader2 className="animate-spin" /> : editingCoupon ? "Update Coupon" : "Save Promotional Code"}
                 </button>
               </div>
             </form>
@@ -219,14 +252,13 @@ export default function AdminCouponsPage() {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex justify-end gap-2">
-                        {/* Edit Button */}
                         <button 
+                          onClick={() => handleEdit(coupon)}
                           className="p-2.5 text-gray-400 hover:text-gold hover:bg-gold/10 rounded-full transition-all"
                           title="Edit Coupon"
                         >
                           <Edit2 size={16} />
                         </button>
-                        {/* Delete Button */}
                         <button 
                           onClick={() => handleDelete(coupon.id)} 
                           className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
