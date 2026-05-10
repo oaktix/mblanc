@@ -9,13 +9,17 @@ async function main() {
   const deletedOrders = await prisma.order.deleteMany({})
   console.log(`Deleted ${deletedOrders.count} orders.`)
   
-  // Delete all users with CUSTOMER role
+  // Delete all users who are NOT ADMIN or STAFF
   const deletedCustomers = await prisma.user.deleteMany({
     where: {
-      role: 'CUSTOMER'
+      NOT: {
+        role: {
+          in: ['ADMIN', 'STAFF']
+        }
+      }
     }
   })
-  console.log(`Deleted ${deletedCustomers.count} customers.`)
+  console.log(`Deleted ${deletedCustomers.count} customers/guests.`)
   
   // Reset any other potential records if needed (e.g. CouponUsage)
   await prisma.couponUsage.deleteMany({})
