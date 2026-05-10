@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Search, ShoppingCart, User, CreditCard, Banknote, Trash2, Download, CheckCircle2, Printer, Mail, Loader2 } from "lucide-react";
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import { POSReceipt } from "@/components/admin/POSReceipt";
 import POSPrintReceipt from "@/components/admin/POSPrintReceipt";
 import AdminShell from "@/components/admin/AdminShell";
 
@@ -133,13 +131,12 @@ export default function POSPage() {
           <p className="text-gray-500 mb-10 font-light">Transaction #{completedOrder.orderId.slice(-6).toUpperCase()} has been finalized.</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-md">
-             <PDFDownloadLink 
-               document={<POSReceipt {...completedOrder} />} 
-               fileName={`mblanc-receipt-${completedOrder.orderId.slice(-6).toUpperCase()}.pdf`}
+             <button 
+               onClick={() => window.print()}
                className="w-full px-8 py-4 bg-burgundy text-white font-bold rounded-xl flex items-center justify-center gap-3 hover:bg-black transition-all shadow-lg"
              >
-               {({ loading }) => (loading ? <><Loader2 className="animate-spin" size={20} /> Generating...</> : <><Download size={20} /> Download Receipt</>)}
-             </PDFDownloadLink>
+               <Printer size={20} /> Print Receipt
+             </button>
 
              <button 
                onClick={handleSendEmail}
