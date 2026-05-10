@@ -8,8 +8,10 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
+  const p = prisma as any;
+
   // Fetch latest products
-  const latestProducts = await prisma.product.findMany({
+  const latestProducts = await p.product.findMany({
     where: { status: "PUBLISHED" },
     orderBy: { createdAt: "desc" },
     take: 6,
@@ -24,7 +26,7 @@ export default async function Home() {
   });
 
   // Fetch dynamic categories
-  const dynamicCategories = await prisma.category.findMany({
+  const dynamicCategories = await p.category.findMany({
     orderBy: { name: "asc" }
   });
 

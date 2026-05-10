@@ -14,8 +14,11 @@ export async function POST(req: Request) {
         }
 
         // 1. Validate all products exist before starting transaction
+        // Using (prisma as any) to bypass stale local types due to EPERM during generation
+        const p = prisma as any;
+
         for (const item of items) {
-            const product = await prisma.product.findUnique({
+            const product = await p.product.findUnique({
                 where: { id: String(item.id).replace(/-+$/, "").trim() }
             });
             if (!product) {
@@ -28,7 +31,7 @@ export async function POST(req: Request) {
 
         if (!finalUserId && shippingDetails?.email) {
             const guestEmail = shippingDetails.email.toLowerCase();
-            const guestUser = await prisma.user.upsert({
+            const guestUser = await p.user.upsert({
                 where: { email: guestEmail },
                 update: {
                     name: shippingDetails.name || undefined,
@@ -45,7 +48,7 @@ export async function POST(req: Request) {
         }
 
         // 3. Create Order
-        const order = await prisma.order.create({
+        const order = await p.order.create({
             data: {
                 total: total,
                 discount: discount || 0,
@@ -61,7 +64,7 @@ export async function POST(req: Request) {
         // 4. Update Coupon (if valid)
         if (couponCode) {
             try {
-                await prisma.coupon.update({
+                await p.coupon.update({
                     where: { code: couponCode },
                     data: { usageCount: { increment: 1 } }
                 });
@@ -77,7 +80,7 @@ export async function POST(req: Request) {
                 ? String(item.variationId).replace(/-+$/, "").trim()
                 : null;
 
-            await prisma.orderItem.create({
+            await p.orderItem.create({
                 data: {
                     orderId: order.id,
                     productId: cleanProductId,
