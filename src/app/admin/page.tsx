@@ -42,18 +42,21 @@ async function DashboardContent() {
       take: 5,
       orderBy: { createdAt: "desc" }
     }),
-    // Fetch sales for last 7 days
-    prisma.order.groupBy({
-      by: ['createdAt'],
+    // Fetch all successful orders for last 7 days for the chart
+    prisma.order.findMany({
       where: { 
         paymentStatus: "SUCCESS",
         createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
       },
-      _sum: { total: true }
+      select: {
+        total: true,
+        createdAt: true,
+        shippingDetails: true
+      }
     })
   ]);
 
-  // Process daily sales for the chart
+  // Process daily sales for the chart with source breakdown
   const last7Days = [...Array(7)].map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
@@ -62,13 +65,27 @@ async function DashboardContent() {
   });
 
   const chartData = last7Days.map(date => {
-    const dayTotal = dailySales
-      .filter(s => new Date(s.createdAt).toDateString() === date.toDateString())
-      .reduce((acc, curr) => acc + (curr._sum.total || 0), 0);
+    const dayOrders = dailySales.filter(s => new Date(s.createdAt).toDateString() === date.toDateString());
+    
+    const webSales = dayOrders
+      .filter(o => {
+        const details = o.shippingDetails as any;
+        return !details || details.type !== "IN-STORE";
+      })
+      .reduce((acc, curr) => acc + (curr.total || 0), 0);
+
+    const posSales = dayOrders
+      .filter(o => {
+        const details = o.shippingDetails as any;
+        return details && details.type === "IN-STORE";
+      })
+      .reduce((acc, curr) => acc + (curr.total || 0), 0);
     
     return {
       label: date.toLocaleDateString('en-US', { weekday: 'short' }),
-      value: dayTotal
+      value: webSales + posSales,
+      web: webSales,
+      pos: posSales
     };
   });
 
@@ -134,15 +151,16 @@ async function DashboardContent() {
             return (
               <div key={i} className="flex-1 flex flex-col items-center gap-3 h-full justify-end group">
                 <div className="relative w-full flex justify-center">
-                  {/* Tooltip */}
-                  <div className="absolute -top-12 bg-charcoal text-white text-[10px] py-1.5 px-2.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 shadow-xl pointer-events-none">
-                    ₦{data.value.toLocaleString()}
-                  </div>
-                  {/* Bar */}
                   <div 
-                    className="w-full max-w-[40px] bg-gradient-to-t from-gold/40 to-gold rounded-t-lg transition-all duration-700 ease-out hover:brightness-110 cursor-pointer"
+                    className="w-full max-w-[40px] bg-gold rounded-t-lg transition-all duration-700 ease-out hover:brightness-110 cursor-pointer relative group"
                     style={{ height: `${Math.max(height, 5)}%` }}
-                  ></div>
+                  >
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-[10px] p-2 rounded shadow-xl whitespace-nowrap z-10 pointer-events-none">
+                      <p className="font-bold border-b border-white/20 pb-1 mb-1">Total: ₦{data.value.toLocaleString()}</p>
+                      <p className="text-gold">POS: ₦{data.pos.toLocaleString()}</p>
+                      <p className="text-blue-400">Web: ₦{data.web.toLocaleString()}</p>
+                    </div>
+                  </div>
                 </div>
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{data.label}</span>
               </div>
@@ -167,7 +185,12 @@ async function DashboardContent() {
                   <div>
                     <p className="text-sm font-bold text-charcoal dark:text-ivory group-hover:text-gold transition-colors">Order #{order.id.slice(-6).toUpperCase()}</p>
                     <p className="text-[11px] text-gray-500">
-                      {new Date(order.createdAt).toLocaleDateString()} • {order.user?.name || "Guest Customer"}
+                      {new Date(order.createdAt).toLocaleDateString()} • {order.user?.name || (order.shippingDetails as any)?.name || "Guest Customer"}
+                      {(order.shippingDetails as any)?.type === "IN-STORE" ? (
+                        <span className="ml-2 px-1.5 py-0.5 bg-gold/10 text-gold text-[8px] font-bold rounded uppercase tracking-tighter">POS</span>
+                      ) : (
+                        <span className="ml-2 px-1.5 py-0.5 bg-blue-50 text-blue-500 text-[8px] font-bold rounded uppercase tracking-tighter">WEB</span>
+                      )}
                     </p>
                   </div>
                 </div>
