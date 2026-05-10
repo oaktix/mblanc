@@ -193,7 +193,7 @@ async function DashboardContent() {
             const height = (data.value / maxValue) * 100;
             return (
               <div key={i} className="flex-1 flex flex-col items-center gap-3 h-full justify-end group">
-                <div className="relative w-full flex justify-center">
+                <div className="relative w-full h-full flex justify-center items-end">
                   <div 
                     className="w-full max-w-[40px] bg-gold rounded-t-lg transition-all duration-700 ease-out hover:brightness-110 cursor-pointer relative group"
                     style={{ height: `${Math.max(height, 5)}%` }}
