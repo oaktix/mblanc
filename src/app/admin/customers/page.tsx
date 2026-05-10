@@ -5,6 +5,7 @@ import EditUserModal from "@/components/admin/EditUserModal";
 import AdminShell from "@/components/admin/AdminShell";
 import ExportButton from "@/components/admin/ExportButton";
 
+export const dynamic = "force-dynamic";
 export const unstable_instant = { prefetch: "static" };
 
 export default function AdminCustomersPage() {
@@ -62,7 +63,6 @@ export default function AdminCustomersPage() {
 
 async function CustomersList() {
   const customers = await prisma.user.findMany({
-    where: { role: "CUSTOMER" },
     include: {
       orders: true,
     },

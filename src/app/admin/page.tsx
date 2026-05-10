@@ -7,6 +7,7 @@ import AdminShell from "@/components/admin/AdminShell";
 import ExportButton from "@/components/admin/ExportButton";
 import { Suspense } from "react";
 
+export const dynamic = "force-dynamic";
 export const unstable_instant = { prefetch: "static" };
 
 export default function AdminPage() {
@@ -48,7 +49,7 @@ async function DashboardContent() {
   ] = await Promise.all([
     prisma.order.aggregate({ _sum: { total: true }, where: { paymentStatus: "SUCCESS" } }),
     prisma.order.count({ where: { paymentStatus: "SUCCESS" } }),
-    prisma.user.count({ where: { role: "CUSTOMER" } }),
+    prisma.user.count(),
     prisma.product.count(),
     prisma.order.findMany({
       take: 5,
@@ -82,10 +83,10 @@ async function DashboardContent() {
       where: { paymentStatus: "SUCCESS", createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } 
     }),
     prisma.user.count({ 
-      where: { role: "CUSTOMER", createdAt: { gte: thirtyDaysAgo } } 
+      where: { createdAt: { gte: thirtyDaysAgo } } 
     }),
     prisma.user.count({ 
-      where: { role: "CUSTOMER", createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } 
+      where: { createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } } 
     })
   ]);
 
