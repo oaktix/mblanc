@@ -17,20 +17,27 @@ export async function POST(req: Request) {
 
         // 1. Validate all products exist
         for (const item of items) {
-            const searchId = String(item.id).trim();
+            // CRITICAL FIX: The cart ID might be in the format 'productId-size-color'
+            // We need to extract the actual database CUID which is the first part.
+            const realProductId = String(item.id).split('-')[0].trim();
+            
+            console.log(`>>> [CHECKOUT] Validating Product ID: ${realProductId} (Original Cart ID: ${item.id})`);
+
             const product = await p.product.findUnique({
-                where: { id: searchId }
+                where: { id: realProductId }
             });
 
             if (!product) {
+                // Fallback to slug if not found by ID
                 const productBySlug = await p.product.findUnique({
-                    where: { slug: item.slug || searchId }
+                    where: { slug: item.slug || realProductId }
                 });
 
                 if (!productBySlug) {
+                    console.error(`>>> [CHECKOUT] Product NOT FOUND: ${realProductId}`);
                     return NextResponse.json({ 
-                        error: `Product "${item.name}" is no longer available. Please clear your cart.`,
-                        details: `ID: ${searchId}`
+                        error: `Product "${item.name}" is no longer available. Please clear your cart and try again.`,
+                        details: `ID: ${realProductId}`
                     }, { status: 400 });
                 }
             }
@@ -41,8 +48,6 @@ export async function POST(req: Request) {
 
         if (!finalUserId && shippingDetails?.email) {
             const guestEmail = shippingDetails.email.toLowerCase();
-            // REMOVING 'phone' temporarily because the generated Prisma client is stuck on an old version 
-            // that doesn't recognize the 'phone' field yet.
             const guestUser = await p.user.upsert({
                 where: { email: guestEmail },
                 update: {
@@ -85,13 +90,16 @@ export async function POST(req: Request) {
 
         // 5. Create OrderItems
         for (const item of items) {
-            const cleanProductId = String(item.id).trim();
+            // Again, extract the real product ID
+            const realProductId = String(item.id).split('-')[0].trim();
             const cleanVariationId = item.variationId ? String(item.variationId).trim() : null;
+
+            console.log(`>>> [CHECKOUT] Creating OrderItem for product: ${realProductId}, variation: ${cleanVariationId}`);
 
             await p.orderItem.create({
                 data: {
                     orderId: order.id,
-                    productId: cleanProductId,
+                    productId: realProductId,
                     quantity: Number(item.quantity),
                     price: Number(item.price),
                     ...(cleanVariationId && cleanVariationId !== "" && cleanVariationId !== "null"
@@ -106,7 +114,7 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error(">>> [ORDER_CREATE] CRITICAL ERROR:", error);
         return NextResponse.json(
-            { error: "Failed to create order. Please try again.", details: error.message },
+            { error: "Failed to create order. Please contact support.", details: error.message },
             { status: 500 }
         );
     }
