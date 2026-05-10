@@ -7,7 +7,6 @@ import AdminShell from "@/components/admin/AdminShell";
 import ExportButton from "@/components/admin/ExportButton";
 import { Suspense } from "react";
 
-export const dynamic = "force-dynamic";
 export const unstable_instant = { prefetch: "static" };
 
 export default function AdminPage() {
