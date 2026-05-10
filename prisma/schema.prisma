@@ -9,20 +9,20 @@ datasource db {
 }
 
 model User {
-  id               String    @id @default(cuid())
+  id               String        @id @default(cuid())
   name             String?
-  email            String?   @unique
-  phone            String?
+  email            String?       @unique
   emailVerified    DateTime?
   image            String?
   password         String?
-  resetToken       String?   @unique
+  role             Role          @default(CUSTOMER)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  resetToken       String?       @unique
   resetTokenExpiry DateTime?
-  role             Role      @default(CUSTOMER)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  orders           Order[]
+  phone            String?
   couponUsages     CouponUsage[]
+  orders           Order[]
 }
 
 model Category {
@@ -48,7 +48,7 @@ model Product {
   images      String[]
   orderItems  OrderItem[]
   variations  Variation[]
-  coupons     Coupon[]
+  coupons     Coupon[]    @relation("CouponToProduct")
 }
 
 model Variation {
@@ -69,15 +69,15 @@ model Order {
   id              String      @id @default(cuid())
   userId          String?
   total           Float
-  discount        Float?
-  couponCode      String?
   status          OrderStatus @default(PENDING)
   shippingDetails Json?
   paymentStatus   String      @default("PENDING")
   paystackRef     String?     @unique
-  notes           String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  couponCode      String?
+  discount        Float?
+  notes           String?
   user            User?       @relation(fields: [userId], references: [id])
   items           OrderItem[]
 }
@@ -95,20 +95,20 @@ model OrderItem {
 }
 
 model Coupon {
-  id          String       @id @default(cuid())
-  code        String       @unique
+  id          String        @id @default(cuid())
+  code        String        @unique
   type        CouponType
   value       Float
-  scope       CouponScope  @default(SITEWIDE)
+  scope       CouponScope   @default(SITEWIDE)
   minPurchase Float?
   maxPurchase Float?
   maxUsages   Int?
-  usageCount  Int          @default(0)
+  usageCount  Int           @default(0)
   expiresAt   DateTime?
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  products    Product[]
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
   usages      CouponUsage[]
+  products    Product[]     @relation("CouponToProduct")
 }
 
 model CouponUsage {

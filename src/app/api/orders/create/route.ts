@@ -43,23 +43,48 @@ export async function POST(req: Request) {
             }
         }
 
-        // 2. Handle User
-        let finalUserId = session?.user?.id || null;
+        // 2. Identify/Capture Customer from Checkout Fields
+        let finalUserId = null;
+        const checkoutEmail = shippingDetails?.email?.toLowerCase() || null;
+        const checkoutPhone = shippingDetails?.phone || null;
+        const checkoutName = shippingDetails?.name || "Guest Client";
 
-        if (!finalUserId && shippingDetails?.email) {
-            const guestEmail = shippingDetails.email.toLowerCase();
-            const guestUser = await p.user.upsert({
-                where: { email: guestEmail },
-                update: {
-                    name: shippingDetails.name || undefined,
-                },
-                create: {
-                    email: guestEmail,
-                    name: shippingDetails.name || "Guest Client",
-                    role: "CUSTOMER",
-                },
+        if (checkoutEmail || checkoutPhone) {
+            const existingUser = await p.user.findFirst({
+                where: {
+                    OR: [
+                        checkoutEmail ? { email: checkoutEmail } : {},
+                        checkoutPhone ? { phone: checkoutPhone } : {}
+                    ].filter(cond => Object.keys(cond).length > 0)
+                }
             });
-            finalUserId = guestUser.id;
+
+            if (existingUser) {
+                // Update existing user with latest info from checkout
+                const updatedUser = await p.user.update({
+                    where: { id: existingUser.id },
+                    data: {
+                        name: checkoutName,
+                        phone: checkoutPhone || existingUser.phone,
+                        // Ensure role is CUSTOMER if it's not ADMIN/STAFF
+                        role: (existingUser.role === "ADMIN" || existingUser.role === "STAFF") ? existingUser.role : "CUSTOMER"
+                    }
+                });
+                finalUserId = updatedUser.id;
+            } else {
+                // Create new customer profile
+                const newUser = await p.user.create({
+                    data: {
+                        email: checkoutEmail,
+                        phone: checkoutPhone,
+                        name: checkoutName,
+                        role: "CUSTOMER",
+                    }
+                });
+                finalUserId = newUser.id;
+            }
+        } else if (session?.user?.id) {
+            finalUserId = session.user.id;
         }
 
         // 3. Create Order
