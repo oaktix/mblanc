@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
         const body = await req.json();
-        const { items, total, discount, couponCode, shippingDetails, notes } = body;
+        const { items, total, discount, couponCode, shippingDetails, notes, paymentProvider } = body;
 
         if (!items || items.length === 0) {
             return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -95,6 +95,7 @@ export async function POST(req: Request) {
                 couponCode: couponCode || null,
                 status: "PENDING",
                 paymentStatus: "PENDING",
+                paymentProvider: paymentProvider || "paystack",
                 shippingDetails: shippingDetails,
                 notes: notes || null,
                 userId: finalUserId,
