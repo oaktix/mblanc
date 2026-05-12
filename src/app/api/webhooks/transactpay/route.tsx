@@ -4,6 +4,7 @@ import { resend } from '@/lib/resend';
 import { OrderStatus } from '@prisma/client';
 import { OrderConfirmationEmail } from '@/components/emails/OrderConfirmationEmail';
 import { generateOrderReceiptBuffer } from '@/lib/pdf-server';
+import { render } from '@react-email/render';
 
 /**
  * TransactPay Webhook Handler
@@ -20,6 +21,8 @@ export async function POST(req: Request) {
     try {
         const body = await req.text();
         const event = JSON.parse(body);
+
+        console.log(">>> [TRANSACTPAY WEBHOOK] Full Event Body:", JSON.stringify(event, null, 2));
 
         if (process.env.RESEND_API_KEY?.startsWith('re_dummy')) {
             console.warn(">>> [TRANSACTPAY WEBHOOK] WARNING: Using dummy Resend API key!");
@@ -101,8 +104,9 @@ export async function POST(req: Request) {
         console.log(">>> [TRANSACTPAY WEBHOOK] Database updated successfully.");
 
         // Email & Receipt Logic (same as Paystack webhook)
-        const shipping = order.shippingDetails as Record<string, string>;
-        const recipientEmail = shipping?.email || order.user?.email;
+        const shipping = (order.shippingDetails || {}) as Record<string, any>;
+        console.log(">>> [TRANSACTPAY WEBHOOK] Raw Shipping Details from DB:", JSON.stringify(shipping, null, 2));
+        const recipientEmail = (shipping?.email || order.user?.email || "").trim();
         const adminEmail = process.env.ADMIN_EMAIL || "thebespokecity@gmail.com";
 
         console.log(">>> [TRANSACTPAY WEBHOOK] Recipient Email Calculation:", {
@@ -111,7 +115,7 @@ export async function POST(req: Request) {
             resolved: recipientEmail
         });
 
-        if (recipientEmail) {
+        if (recipientEmail && recipientEmail.includes('@')) {
             console.log(">>> [TRANSACTPAY WEBHOOK] Generating PDF and sending emails...");
 
             try {
@@ -145,23 +149,39 @@ export async function POST(req: Request) {
                         }
                     ] : [];
 
-                    await resend.emails.send({
-                        from: 'MBlanc Bespoke <hello@mblancfits.com>',
-                        to: String(recipientEmail),
-                        subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
-                        react: (
+                    // 4a. Render Email to HTML locally to catch rendering errors
+                    let emailHtml = "";
+                    try {
+                        emailHtml = await render(
                             <OrderConfirmationEmail 
                                 orderId={order.id}
-                                customerName={shipping?.name || order.user?.name || 'Valued Client'}
+                                customerName={String(shipping?.name || order.user?.name || 'Valued Client')}
                                 items={formattedItems}
                                 total={order.total}
-                                shippingAddress={shipping?.address || ''}
-                                shippingCity={shipping?.city || ''}
+                                shippingAddress={String(shipping?.address || '')}
+                                shippingCity={String(shipping?.city || '')}
                             />
-                        ),
+                        );
+                        console.log(">>> [TRANSACTPAY WEBHOOK] Email rendered to HTML successfully.");
+                    } catch (renderError) {
+                        console.error(">>> [TRANSACTPAY WEBHOOK] Email Rendering Failed:", renderError);
+                        // Fallback to simple HTML if React rendering fails
+                        emailHtml = `<h1>Order Confirmation</h1><p>Hi, your order #${order.id.slice(-6).toUpperCase()} is confirmed.</p>`;
+                    }
+
+                    const response = await resend.emails.send({
+                        from: 'MBlanc Bespoke <hello@mblancfits.com>',
+                        to: recipientEmail,
+                        subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
+                        html: emailHtml,
                         attachments: attachments,
                     });
-                    console.log(`>>> [TRANSACTPAY WEBHOOK] Buyer email successfully sent to: ${recipientEmail}`);
+                    
+                    if (response.error) {
+                        console.error(">>> [TRANSACTPAY WEBHOOK] Buyer email Resend error:", response.error);
+                    } else {
+                        console.log(`>>> [TRANSACTPAY WEBHOOK] Buyer email accepted by Resend. ID: ${response.data?.id}`);
+                    }
                 } catch (customerEmailErr) {
                     console.error(">>> [TRANSACTPAY WEBHOOK] Customer email failed:", customerEmailErr);
                     // Log full error for debugging

@@ -14,17 +14,17 @@ export async function generateOrderReceiptBuffer(orderData: any) {
 
     const buffer = await renderToBuffer(
       <OrderReceipt
-        orderId={orderData.id}
-        customerName={orderData.customerName}
+        orderId={String(orderData.id)}
+        customerName={String(orderData.customerName)}
         items={orderData.items}
-        total={orderData.total}
-        paymentMethod={orderData.paymentMethod || "Paystack"}
+        total={Number(orderData.total)}
+        paymentMethod={String(orderData.paymentMethod || "Paystack")}
         date={new Date().toLocaleDateString("en-NG", { 
           day: "numeric", 
           month: "long", 
           year: "numeric" 
         })}
-        shippingAddress={orderData.shippingAddress}
+        shippingAddress={String(orderData.shippingAddress)}
       />
     );
     return buffer;

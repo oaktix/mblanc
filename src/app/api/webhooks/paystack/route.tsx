@@ -5,6 +5,7 @@ import { resend } from '@/lib/resend';
 import { OrderStatus } from '@prisma/client';
 import { OrderConfirmationEmail } from '@/components/emails/OrderConfirmationEmail';
 import { generateOrderReceiptBuffer } from '@/lib/pdf-server';
+import { render } from '@react-email/render';
 
 export async function POST(req: Request) {
     console.log(">>> [PAYSTACK WEBHOOK] Request Received");
@@ -33,6 +34,19 @@ export async function POST(req: Request) {
         }
 
         const event = JSON.parse(body);
+
+        console.log(">>> [PAYSTACK WEBHOOK] Full Event Body:", JSON.stringify({
+            event: event.event,
+            data: {
+                reference: event.data?.reference,
+                customer: {
+                    email: event.data?.customer?.email,
+                    first_name: event.data?.customer?.first_name,
+                    last_name: event.data?.customer?.last_name
+                },
+                metadata: event.data?.metadata
+            }
+        }, null, 2));
 
         // 2. Process Successful Charge
         if (event.event === 'charge.success') {
@@ -88,8 +102,9 @@ export async function POST(req: Request) {
             console.log(">>> [PAYSTACK WEBHOOK] Database updated successfully.");
 
             // 4. Email & Receipt Logic
-            const shipping = order.shippingDetails as Record<string, string>;
-            const recipientEmail = shipping?.email || customer.email || order.user?.email;
+            const shipping = (order.shippingDetails || {}) as Record<string, any>;
+            console.log(">>> [PAYSTACK WEBHOOK] Raw Shipping Details from DB:", JSON.stringify(shipping, null, 2));
+            const recipientEmail = (shipping?.email || customer?.email || order.user?.email || "").trim();
             const adminEmail = process.env.ADMIN_EMAIL || "thebespokecity@gmail.com";
 
             console.log(">>> [PAYSTACK WEBHOOK] Recipient Email Calculation:", {
@@ -99,7 +114,7 @@ export async function POST(req: Request) {
                 resolved: recipientEmail
             });
 
-            if (recipientEmail) {
+            if (recipientEmail && recipientEmail.includes('@')) {
                 console.log(">>> [PAYSTACK WEBHOOK] Generating PDF and sending emails...");
 
                 try {
@@ -134,23 +149,39 @@ export async function POST(req: Request) {
                             }
                         ] : [];
 
-                        await resend.emails.send({
-                            from: 'MBlanc Bespoke <hello@mblancfits.com>',
-                            to: String(recipientEmail),
-                            subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
-                            react: (
+                        // 4a. Render Email to HTML locally to catch rendering errors
+                        let emailHtml = "";
+                        try {
+                            emailHtml = await render(
                                 <OrderConfirmationEmail 
                                     orderId={order.id}
-                                    customerName={shipping?.name || order.user?.name || 'Valued Client'}
+                                    customerName={String(shipping?.name || order.user?.name || 'Valued Client')}
                                     items={formattedItems}
                                     total={order.total}
-                                    shippingAddress={shipping?.address || ''}
-                                    shippingCity={shipping?.city || ''}
+                                    shippingAddress={String(shipping?.address || '')}
+                                    shippingCity={String(shipping?.city || '')}
                                 />
-                            ),
+                            );
+                            console.log(">>> [PAYSTACK WEBHOOK] Email rendered to HTML successfully.");
+                        } catch (renderError) {
+                            console.error(">>> [PAYSTACK WEBHOOK] Email Rendering Failed:", renderError);
+                            // Fallback to simple HTML if React rendering fails
+                            emailHtml = `<h1>Order Confirmation</h1><p>Hi, your order #${order.id.slice(-6).toUpperCase()} is confirmed.</p>`;
+                        }
+
+                        const response = await resend.emails.send({
+                            from: 'MBlanc Bespoke <hello@mblancfits.com>',
+                            to: recipientEmail,
+                            subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
+                            html: emailHtml,
                             attachments: attachments,
                         });
-                        console.log(`>>> [PAYSTACK WEBHOOK] Buyer email successfully sent to: ${recipientEmail}`);
+                        
+                        if (response.error) {
+                            console.error(">>> [PAYSTACK WEBHOOK] Buyer email Resend error:", response.error);
+                        } else {
+                            console.log(`>>> [PAYSTACK WEBHOOK] Buyer email accepted by Resend. ID: ${response.data?.id}`);
+                        }
                     } catch (customerEmailErr) {
                         console.error(">>> [PAYSTACK WEBHOOK] Customer email failed:", customerEmailErr);
                         // Log full error for debugging
