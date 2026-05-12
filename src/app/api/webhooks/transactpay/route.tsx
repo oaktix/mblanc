@@ -148,6 +148,7 @@ export async function POST(req: Request) {
                     const response = await resend.emails.send({
                         from: 'MBlanc Bespoke <hello@mblancfits.com>',
                         to: recipientEmail,
+                        reply_to: 'thebespokecity@gmail.com',
                         subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
                         html: emailHtml,
                     });

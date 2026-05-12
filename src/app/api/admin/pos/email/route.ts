@@ -20,8 +20,9 @@ export async function POST(req: Request) {
     }
 
     const { data, error } = await resend.emails.send({
-      from: "MBlanc Bespoke <orders@mblancfits.com>",
+      from: "MBlanc Bespoke <hello@mblancfits.com>",
       to: [email],
+      reply_to: "thebespokecity@gmail.com",
       subject: `Receipt for Order #${orderId.slice(-6).toUpperCase()} - MBlanc Bespoke`,
       react: POSReceiptEmail({
         orderId,
