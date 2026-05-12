@@ -13,6 +13,10 @@ export async function POST(req: Request) {
         const body = await req.text();
         const paystackSignature = req.headers.get('x-paystack-signature');
 
+        if (process.env.RESEND_API_KEY?.startsWith('re_dummy')) {
+            console.warn(">>> [PAYSTACK WEBHOOK] WARNING: Using dummy Resend API key!");
+        }
+
         // 1. Signature Verification
         if (!paystackSignature) {
             return new Response('No signature provided', { status: 401 });
@@ -86,8 +90,14 @@ export async function POST(req: Request) {
             // 4. Email & Receipt Logic
             const shipping = order.shippingDetails as Record<string, string>;
             const recipientEmail = shipping?.email || customer.email || order.user?.email;
-            const adminEmail = process.env.ADMIN_EMAIL || "admin@mblancfits.com";
-            const backupAdminEmail = process.env.BACKUP_ADMIN_EMAIL || "thebespokecity@gmail.com";
+            const adminEmail = process.env.ADMIN_EMAIL || "thebespokecity@gmail.com";
+
+            console.log(">>> [PAYSTACK WEBHOOK] Recipient Email Calculation:", {
+                shippingEmail: shipping?.email,
+                customerEmail: customer?.email,
+                userEmail: order.user?.email,
+                resolved: recipientEmail
+            });
 
             if (recipientEmail) {
                 console.log(">>> [PAYSTACK WEBHOOK] Generating PDF and sending emails...");
@@ -126,7 +136,7 @@ export async function POST(req: Request) {
 
                         await resend.emails.send({
                             from: 'MBlanc Bespoke <hello@mblancfits.com>',
-                            to: recipientEmail,
+                            to: String(recipientEmail),
                             subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
                             react: (
                                 <OrderConfirmationEmail 
@@ -140,16 +150,20 @@ export async function POST(req: Request) {
                             ),
                             attachments: attachments,
                         });
-                        console.log(`>>> [PAYSTACK WEBHOOK] Customer confirmation email sent to ${recipientEmail}`);
+                        console.log(`>>> [PAYSTACK WEBHOOK] Buyer email successfully sent to: ${recipientEmail}`);
                     } catch (customerEmailErr) {
                         console.error(">>> [PAYSTACK WEBHOOK] Customer email failed:", customerEmailErr);
+                        // Log full error for debugging
+                        if (typeof customerEmailErr === 'object') {
+                            console.error(JSON.stringify(customerEmailErr, null, 2));
+                        }
                     }
 
                     // 5. Send to Admin
                     try {
                         await resend.emails.send({
                             from: 'MBlanc Bespoke <hello@mblancfits.com>',
-                            to: [adminEmail, backupAdminEmail],
+                            to: adminEmail,
                             subject: `New Order Received - #${order.id.slice(-6).toUpperCase()}`,
                             html: `
                                 <div style="font-family: sans-serif; padding: 20px;">

@@ -14,11 +14,11 @@ if (!apiKey) {
 const resend = new Resend(apiKey);
 
 async function testEmail() {
-  console.log("Sending test admin order notification to admin@mblancfits.com and backup...");
+  console.log("Sending test admin order notification to thebespokecity@gmail.com...");
   try {
     const data = await resend.emails.send({
       from: 'MBlanc Bespoke <hello@mblancfits.com>',
-      to: ['admin@mblancfits.com', 'thebespokecity@gmail.com'],
+      to: 'thebespokecity@gmail.com',
       subject: 'New Order Received - #TEST01',
       html: `
         <div style="font-family: sans-serif; padding: 20px;">

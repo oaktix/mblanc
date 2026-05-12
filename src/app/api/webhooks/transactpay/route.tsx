@@ -21,6 +21,10 @@ export async function POST(req: Request) {
         const body = await req.text();
         const event = JSON.parse(body);
 
+        if (process.env.RESEND_API_KEY?.startsWith('re_dummy')) {
+            console.warn(">>> [TRANSACTPAY WEBHOOK] WARNING: Using dummy Resend API key!");
+        }
+
         // TODO: Add TransactPay signature verification once API keys are configured
         // TransactPay may send a signature header for verification — check their docs.
         // For now, we validate by checking the order exists and matches expected data.
@@ -99,8 +103,13 @@ export async function POST(req: Request) {
         // Email & Receipt Logic (same as Paystack webhook)
         const shipping = order.shippingDetails as Record<string, string>;
         const recipientEmail = shipping?.email || order.user?.email;
-        const adminEmail = process.env.ADMIN_EMAIL || "admin@mblancfits.com";
-        const backupAdminEmail = process.env.BACKUP_ADMIN_EMAIL || "thebespokecity@gmail.com";
+        const adminEmail = process.env.ADMIN_EMAIL || "thebespokecity@gmail.com";
+
+        console.log(">>> [TRANSACTPAY WEBHOOK] Recipient Email Calculation:", {
+            shippingEmail: shipping?.email,
+            userEmail: order.user?.email,
+            resolved: recipientEmail
+        });
 
         if (recipientEmail) {
             console.log(">>> [TRANSACTPAY WEBHOOK] Generating PDF and sending emails...");
@@ -138,7 +147,7 @@ export async function POST(req: Request) {
 
                     await resend.emails.send({
                         from: 'MBlanc Bespoke <hello@mblancfits.com>',
-                        to: recipientEmail,
+                        to: String(recipientEmail),
                         subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
                         react: (
                             <OrderConfirmationEmail 
@@ -152,16 +161,20 @@ export async function POST(req: Request) {
                         ),
                         attachments: attachments,
                     });
-                    console.log(`>>> [TRANSACTPAY WEBHOOK] Customer confirmation email sent to ${recipientEmail}`);
+                    console.log(`>>> [TRANSACTPAY WEBHOOK] Buyer email successfully sent to: ${recipientEmail}`);
                 } catch (customerEmailErr) {
                     console.error(">>> [TRANSACTPAY WEBHOOK] Customer email failed:", customerEmailErr);
+                    // Log full error for debugging
+                    if (typeof customerEmailErr === 'object') {
+                        console.error(JSON.stringify(customerEmailErr, null, 2));
+                    }
                 }
 
                 // 5. Send to Admin
                 try {
                     await resend.emails.send({
                         from: 'MBlanc Bespoke <hello@mblancfits.com>',
-                        to: [adminEmail, backupAdminEmail],
+                        to: adminEmail,
                         subject: `New Order Received - #${order.id.slice(-6).toUpperCase()}`,
                         html: `
                             <div style="font-family: sans-serif; padding: 20px;">
