@@ -102,8 +102,7 @@ export async function POST(req: Request) {
             console.log(">>> [PAYSTACK WEBHOOK] Database updated successfully.");
 
             // 4. Email & Receipt Logic
-            const shipping = (order.shippingDetails || {}) as Record<string, any>;
-            console.log(">>> [PAYSTACK WEBHOOK] Raw Shipping Details from DB:", JSON.stringify(shipping, null, 2));
+            const shipping = (order.shippingDetails || {}) as Record<string, string>;
             const recipientEmail = (shipping?.email || customer?.email || order.user?.email || "").trim();
             const adminEmail = process.env.ADMIN_EMAIL || "thebespokecity@gmail.com";
 
@@ -120,11 +119,11 @@ export async function POST(req: Request) {
                 try {
                     // Prepare items data for Email/PDF
                     const formattedItems = order.items.map(item => ({
-                        name: item.product.name,
-                        quantity: item.quantity,
-                        price: item.price,
-                        size: item.variation?.size,
-                        color: item.variation?.color,
+                        name: String(item.product.name),
+                        quantity: Number(item.quantity),
+                        price: Number(item.price),
+                        size: item.variation?.size ? String(item.variation.size) : null,
+                        color: item.variation?.color ? String(item.variation.color) : null,
                     }));
 
                     let pdfBuffer: Buffer | null = null;
