@@ -86,7 +86,8 @@ export async function POST(req: Request) {
             // 4. Email & Receipt Logic
             const shipping = order.shippingDetails as Record<string, string>;
             const recipientEmail = shipping?.email || customer.email || order.user?.email;
-            const adminEmail = "thebespokecity@gmail.com";
+            const adminEmail = process.env.ADMIN_EMAIL || "admin@mblancfits.com";
+            const backupAdminEmail = process.env.BACKUP_ADMIN_EMAIL || "thebespokecity@gmail.com";
 
             if (recipientEmail) {
                 console.log(">>> [PAYSTACK WEBHOOK] Generating PDF and sending emails...");
@@ -115,50 +116,60 @@ export async function POST(req: Request) {
                     }
 
                     // 4. Send Confirmation Email to Customer
-                    const attachments = pdfBuffer ? [
-                        {
-                            content: pdfBuffer,
-                            filename: `MBlanc_Receipt_${order.id.slice(-6).toUpperCase()}.pdf`,
-                        }
-                    ] : [];
+                    try {
+                        const attachments = pdfBuffer ? [
+                            {
+                                content: pdfBuffer,
+                                filename: `MBlanc_Receipt_${order.id.slice(-6).toUpperCase()}.pdf`,
+                            }
+                        ] : [];
 
-                    await resend.emails.send({
-                        from: 'MBlanc Bespoke <hello@mblancfits.com>',
-                        to: shipping?.email || order.user?.email || adminEmail,
-                        subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
-                        react: (
-                            <OrderConfirmationEmail 
-                                orderId={order.id}
-                                customerName={shipping?.name || order.user?.name || 'Valued Client'}
-                                items={formattedItems}
-                                total={order.total}
-                                shippingAddress={shipping?.address || ''}
-                                shippingCity={shipping?.city || ''}
-                            />
-                        ),
-                        attachments: attachments,
-                    });
+                        await resend.emails.send({
+                            from: 'MBlanc Bespoke <hello@mblancfits.com>',
+                            to: recipientEmail,
+                            subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
+                            react: (
+                                <OrderConfirmationEmail 
+                                    orderId={order.id}
+                                    customerName={shipping?.name || order.user?.name || 'Valued Client'}
+                                    items={formattedItems}
+                                    total={order.total}
+                                    shippingAddress={shipping?.address || ''}
+                                    shippingCity={shipping?.city || ''}
+                                />
+                            ),
+                            attachments: attachments,
+                        });
+                        console.log(`>>> [PAYSTACK WEBHOOK] Customer confirmation email sent to ${recipientEmail}`);
+                    } catch (customerEmailErr) {
+                        console.error(">>> [PAYSTACK WEBHOOK] Customer email failed:", customerEmailErr);
+                    }
 
-                    // Send to Admin
-                    await resend.emails.send({
-                        from: 'MBlanc Bespoke <hello@mblancfits.com>',
-                        to: adminEmail,
-                        subject: `New Order Received - #${order.id.slice(-6).toUpperCase()}`,
-                        html: `
-                            <div style="font-family: sans-serif; padding: 20px;">
-                                <h2>New Order Alert</h2>
-                                <p>A new order has been paid and confirmed.</p>
-                                <hr />
-                                <p><strong>Order ID:</strong> #${order.id}</p>
-                                <p><strong>Customer:</strong> ${shipping?.name} (${recipientEmail})</p>
-                                <p><strong>Amount:</strong> ₦${order.total.toLocaleString()}</p>
-                                <p><strong>Items:</strong> ${formattedItems.map(i => `${i.name} (x${i.quantity})`).join(', ')}</p>
-                                <p><strong>Address:</strong> ${shipping?.address}, ${shipping?.city}</p>
-                                <hr />
-                                <p>Please log in to the admin panel to manage this order.</p>
-                            </div>
-                        `,
-                    });
+                    // 5. Send to Admin
+                    try {
+                        await resend.emails.send({
+                            from: 'MBlanc Bespoke <hello@mblancfits.com>',
+                            to: [adminEmail, backupAdminEmail],
+                            subject: `New Order Received - #${order.id.slice(-6).toUpperCase()}`,
+                            html: `
+                                <div style="font-family: sans-serif; padding: 20px;">
+                                    <h2>New Order Alert</h2>
+                                    <p>A new order has been paid and confirmed.</p>
+                                    <hr />
+                                    <p><strong>Order ID:</strong> #${order.id}</p>
+                                    <p><strong>Customer:</strong> ${shipping?.name} (${recipientEmail})</p>
+                                    <p><strong>Amount:</strong> ₦${order.total.toLocaleString()}</p>
+                                    <p><strong>Items:</strong> ${formattedItems.map(i => `${i.name} (x${i.quantity})`).join(', ')}</p>
+                                    <p><strong>Address:</strong> ${shipping?.address}, ${shipping?.city}</p>
+                                    <hr />
+                                    <p>Please log in to the admin panel to manage this order.</p>
+                                </div>
+                            `,
+                        });
+                        console.log(">>> [PAYSTACK WEBHOOK] Admin notification email sent.");
+                    } catch (adminEmailErr) {
+                        console.error(">>> [PAYSTACK WEBHOOK] Admin email failed:", adminEmailErr);
+                    }
 
                     console.log(">>> [PAYSTACK WEBHOOK] Emails sent successfully.");
                 } catch (err: unknown) {

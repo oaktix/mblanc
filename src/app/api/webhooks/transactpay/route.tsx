@@ -99,7 +99,8 @@ export async function POST(req: Request) {
         // Email & Receipt Logic (same as Paystack webhook)
         const shipping = order.shippingDetails as Record<string, string>;
         const recipientEmail = shipping?.email || order.user?.email;
-        const adminEmail = "thebespokecity@gmail.com";
+        const adminEmail = process.env.ADMIN_EMAIL || "admin@mblancfits.com";
+        const backupAdminEmail = process.env.BACKUP_ADMIN_EMAIL || "thebespokecity@gmail.com";
 
         if (recipientEmail) {
             console.log(">>> [TRANSACTPAY WEBHOOK] Generating PDF and sending emails...");
@@ -126,52 +127,62 @@ export async function POST(req: Request) {
                     console.error('>>> [TRANSACTPAY WEBHOOK] PDF Generation Failed:', pdfError);
                 }
 
-                const attachments = pdfBuffer ? [
-                    {
-                        content: pdfBuffer,
-                        filename: `MBlanc_Receipt_${order.id.slice(-6).toUpperCase()}.pdf`,
-                    }
-                ] : [];
+                // 4. Send Confirmation Email to Customer
+                try {
+                    const attachments = pdfBuffer ? [
+                        {
+                            content: pdfBuffer,
+                            filename: `MBlanc_Receipt_${order.id.slice(-6).toUpperCase()}.pdf`,
+                        }
+                    ] : [];
 
-                // Send Confirmation Email to Customer
-                await resend.emails.send({
-                    from: 'MBlanc Bespoke <hello@mblancfits.com>',
-                    to: shipping?.email || order.user?.email || adminEmail,
-                    subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
-                    react: (
-                        <OrderConfirmationEmail 
-                            orderId={order.id}
-                            customerName={shipping?.name || order.user?.name || 'Valued Client'}
-                            items={formattedItems}
-                            total={order.total}
-                            shippingAddress={shipping?.address || ''}
-                            shippingCity={shipping?.city || ''}
-                        />
-                    ),
-                    attachments: attachments,
-                });
+                    await resend.emails.send({
+                        from: 'MBlanc Bespoke <hello@mblancfits.com>',
+                        to: recipientEmail,
+                        subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
+                        react: (
+                            <OrderConfirmationEmail 
+                                orderId={order.id}
+                                customerName={shipping?.name || order.user?.name || 'Valued Client'}
+                                items={formattedItems}
+                                total={order.total}
+                                shippingAddress={shipping?.address || ''}
+                                shippingCity={shipping?.city || ''}
+                            />
+                        ),
+                        attachments: attachments,
+                    });
+                    console.log(`>>> [TRANSACTPAY WEBHOOK] Customer confirmation email sent to ${recipientEmail}`);
+                } catch (customerEmailErr) {
+                    console.error(">>> [TRANSACTPAY WEBHOOK] Customer email failed:", customerEmailErr);
+                }
 
-                // Send to Admin
-                await resend.emails.send({
-                    from: 'MBlanc Bespoke <hello@mblancfits.com>',
-                    to: adminEmail,
-                    subject: `New Order Received - #${order.id.slice(-6).toUpperCase()}`,
-                    html: `
-                        <div style="font-family: sans-serif; padding: 20px;">
-                            <h2>New Order Alert</h2>
-                            <p>A new order has been paid via <strong>TransactPay</strong> and confirmed.</p>
-                            <hr />
-                            <p><strong>Order ID:</strong> #${order.id}</p>
-                            <p><strong>Customer:</strong> ${shipping?.name} (${recipientEmail})</p>
-                            <p><strong>Amount:</strong> ₦${order.total.toLocaleString()}</p>
-                            <p><strong>Payment Gateway:</strong> TransactPay</p>
-                            <p><strong>Items:</strong> ${formattedItems.map((i) => `${i.name} (x${i.quantity})`).join(', ')}</p>
-                            <p><strong>Address:</strong> ${shipping?.address}, ${shipping?.city}</p>
-                            <hr />
-                            <p>Please log in to the admin panel to manage this order.</p>
-                        </div>
-                    `,
-                });
+                // 5. Send to Admin
+                try {
+                    await resend.emails.send({
+                        from: 'MBlanc Bespoke <hello@mblancfits.com>',
+                        to: [adminEmail, backupAdminEmail],
+                        subject: `New Order Received - #${order.id.slice(-6).toUpperCase()}`,
+                        html: `
+                            <div style="font-family: sans-serif; padding: 20px;">
+                                <h2>New Order Alert</h2>
+                                <p>A new order has been paid via <strong>TransactPay</strong> and confirmed.</p>
+                                <hr />
+                                <p><strong>Order ID:</strong> #${order.id}</p>
+                                <p><strong>Customer:</strong> ${shipping?.name} (${recipientEmail})</p>
+                                <p><strong>Amount:</strong> ₦${order.total.toLocaleString()}</p>
+                                <p><strong>Payment Gateway:</strong> TransactPay</p>
+                                <p><strong>Items:</strong> ${formattedItems.map((i) => `${i.name} (x${i.quantity})`).join(', ')}</p>
+                                <p><strong>Address:</strong> ${shipping?.address}, ${shipping?.city}</p>
+                                <hr />
+                                <p>Please log in to the admin panel to manage this order.</p>
+                            </div>
+                        `,
+                    });
+                    console.log(">>> [TRANSACTPAY WEBHOOK] Admin notification email sent.");
+                } catch (adminEmailErr) {
+                    console.error(">>> [TRANSACTPAY WEBHOOK] Admin email failed:", adminEmailErr);
+                }
 
                 console.log(">>> [TRANSACTPAY WEBHOOK] Emails sent successfully.");
             } catch (err: unknown) {
