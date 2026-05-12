@@ -4,7 +4,6 @@ import prisma from '@/lib/prisma';
 import { resend } from '@/lib/resend';
 import { OrderStatus } from '@prisma/client';
 import { OrderConfirmationEmail } from '@/components/emails/OrderConfirmationEmail';
-import { generateOrderReceiptBuffer } from '@/lib/pdf-server';
 import { render } from '@react-email/render';
 
 export async function POST(req: Request) {
@@ -114,10 +113,8 @@ export async function POST(req: Request) {
             });
 
             if (recipientEmail && recipientEmail.includes('@')) {
-                console.log(">>> [PAYSTACK WEBHOOK] Generating PDF and sending emails...");
-
                 try {
-                    // Prepare items data for Email/PDF
+                    // Prepare items data for Email
                     const formattedItems = order.items.map(item => ({
                         name: String(item.product.name),
                         quantity: Number(item.quantity),
@@ -126,28 +123,8 @@ export async function POST(req: Request) {
                         color: item.variation?.color ? String(item.variation.color) : null,
                     }));
 
-                    let pdfBuffer: Buffer | null = null;
-                    try {
-                        pdfBuffer = await generateOrderReceiptBuffer({
-                            id: order.id,
-                            customerName: shipping?.name || 'Valued Client',
-                            items: formattedItems,
-                            total: order.total,
-                            shippingAddress: `${shipping?.address}, ${shipping?.city}`,
-                        });
-                    } catch (pdfError) {
-                        console.error('>>> [PAYSTACK WEBHOOK] PDF Generation Failed:', pdfError);
-                    }
-
                     // 4. Send Confirmation Email to Customer
                     try {
-                        const attachments = pdfBuffer ? [
-                            {
-                                content: pdfBuffer,
-                                filename: `MBlanc_Receipt_${order.id.slice(-6).toUpperCase()}.pdf`,
-                            }
-                        ] : [];
-
                         // 4a. Render Email to HTML locally to catch rendering errors
                         let emailHtml = "";
                         try {
@@ -173,7 +150,6 @@ export async function POST(req: Request) {
                             to: recipientEmail,
                             subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
                             html: emailHtml,
-                            attachments: attachments,
                         });
                         
                         if (response.error) {
@@ -183,10 +159,6 @@ export async function POST(req: Request) {
                         }
                     } catch (customerEmailErr) {
                         console.error(">>> [PAYSTACK WEBHOOK] Customer email failed:", customerEmailErr);
-                        // Log full error for debugging
-                        if (typeof customerEmailErr === 'object') {
-                            console.error(JSON.stringify(customerEmailErr, null, 2));
-                        }
                     }
 
                     // 5. Send to Admin
@@ -217,7 +189,7 @@ export async function POST(req: Request) {
 
                     console.log(">>> [PAYSTACK WEBHOOK] Emails sent successfully.");
                 } catch (err: unknown) {
-                    console.error(">>> [PAYSTACK WEBHOOK] Email/PDF Error:", err instanceof Error ? err.message : err);
+                    console.error(">>> [PAYSTACK WEBHOOK] Email processing error:", err instanceof Error ? err.message : err);
                 }
             }
         }

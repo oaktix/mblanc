@@ -3,7 +3,6 @@ import prisma from '@/lib/prisma';
 import { resend } from '@/lib/resend';
 import { OrderStatus } from '@prisma/client';
 import { OrderConfirmationEmail } from '@/components/emails/OrderConfirmationEmail';
-import { generateOrderReceiptBuffer } from '@/lib/pdf-server';
 import { render } from '@react-email/render';
 
 /**
@@ -115,8 +114,6 @@ export async function POST(req: Request) {
         });
 
         if (recipientEmail && recipientEmail.includes('@')) {
-            console.log(">>> [TRANSACTPAY WEBHOOK] Generating PDF and sending emails...");
-
             try {
                 const formattedItems = order.items.map((item) => ({
                     name: String(item.product.name),
@@ -126,54 +123,33 @@ export async function POST(req: Request) {
                     color: item.variation?.color ? String(item.variation.color) : null,
                 }));
 
-                let pdfBuffer: Buffer | null = null;
+                // 4a. Render Email to HTML locally to catch rendering errors
+                let emailHtml = "";
                 try {
-                    pdfBuffer = await generateOrderReceiptBuffer({
-                        id: order.id,
-                        customerName: shipping?.name || 'Valued Client',
-                        items: formattedItems,
-                        total: order.total,
-                        shippingAddress: `${shipping?.address}, ${shipping?.city}`,
-                    });
-                } catch (pdfError) {
-                    console.error('>>> [TRANSACTPAY WEBHOOK] PDF Generation Failed:', pdfError);
+                    emailHtml = await render(
+                        <OrderConfirmationEmail 
+                            orderId={order.id}
+                            customerName={String(shipping?.name || order.user?.name || 'Valued Client')}
+                            items={formattedItems}
+                            total={order.total}
+                            shippingAddress={String(shipping?.address || '')}
+                            shippingCity={String(shipping?.city || '')}
+                        />
+                    );
+                    console.log(">>> [TRANSACTPAY WEBHOOK] Email rendered to HTML successfully.");
+                } catch (renderError) {
+                    console.error(">>> [TRANSACTPAY WEBHOOK] Email Rendering Failed:", renderError);
+                    // Fallback to simple HTML if React rendering fails
+                    emailHtml = `<h1>Order Confirmation</h1><p>Hi, your order #${order.id.slice(-6).toUpperCase()} is confirmed.</p>`;
                 }
 
                 // 4. Send Confirmation Email to Customer
                 try {
-                    const attachments = pdfBuffer ? [
-                        {
-                            content: pdfBuffer,
-                            filename: `MBlanc_Receipt_${order.id.slice(-6).toUpperCase()}.pdf`,
-                        }
-                    ] : [];
-
-                    // 4a. Render Email to HTML locally to catch rendering errors
-                    let emailHtml = "";
-                    try {
-                        emailHtml = await render(
-                            <OrderConfirmationEmail 
-                                orderId={order.id}
-                                customerName={String(shipping?.name || order.user?.name || 'Valued Client')}
-                                items={formattedItems}
-                                total={order.total}
-                                shippingAddress={String(shipping?.address || '')}
-                                shippingCity={String(shipping?.city || '')}
-                            />
-                        );
-                        console.log(">>> [TRANSACTPAY WEBHOOK] Email rendered to HTML successfully.");
-                    } catch (renderError) {
-                        console.error(">>> [TRANSACTPAY WEBHOOK] Email Rendering Failed:", renderError);
-                        // Fallback to simple HTML if React rendering fails
-                        emailHtml = `<h1>Order Confirmation</h1><p>Hi, your order #${order.id.slice(-6).toUpperCase()} is confirmed.</p>`;
-                    }
-
                     const response = await resend.emails.send({
                         from: 'MBlanc Bespoke <hello@mblancfits.com>',
                         to: recipientEmail,
                         subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
                         html: emailHtml,
-                        attachments: attachments,
                     });
                     
                     if (response.error) {
@@ -218,7 +194,7 @@ export async function POST(req: Request) {
 
                 console.log(">>> [TRANSACTPAY WEBHOOK] Emails sent successfully.");
             } catch (err: unknown) {
-                console.error(">>> [TRANSACTPAY WEBHOOK] Email/PDF Error:", err instanceof Error ? err.message : err);
+                console.error(">>> [TRANSACTPAY WEBHOOK] Email Error:", err instanceof Error ? err.message : err);
             }
         }
 
