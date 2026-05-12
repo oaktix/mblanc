@@ -71,19 +71,16 @@ export async function POST(req: Request) {
         }
 
         // Verify this order was intended for TransactPay
-        // @ts-ignore - Ignore TS cache issues
         if (existingOrder.paymentProvider !== "transactpay") {
-            // @ts-ignore
             console.warn(`>>> [TRANSACTPAY WEBHOOK] Order ${reference} has provider "${existingOrder.paymentProvider}", expected "transactpay".`);
         }
 
         // Update Order Status
-        const order: any = await prisma.order.update({
+        const order = await prisma.order.update({
             where: { id: reference },
             data: {
                 status: OrderStatus.PROCESSING,
                 paymentStatus: "SUCCESS",
-                // @ts-ignore - Ignore TS cache issues
                 transactpayRef: event?.data?.transactionId || reference,
             },
             include: { 
@@ -100,15 +97,15 @@ export async function POST(req: Request) {
         console.log(">>> [TRANSACTPAY WEBHOOK] Database updated successfully.");
 
         // Email & Receipt Logic (same as Paystack webhook)
-        const shipping = order.shippingDetails as any;
+        const shipping = order.shippingDetails as Record<string, string>;
         const recipientEmail = shipping?.email || order.user?.email;
-        const adminEmail = "admin@mblancfits.com";
+        const adminEmail = "thebespokecity@gmail.com";
 
         if (recipientEmail) {
             console.log(">>> [TRANSACTPAY WEBHOOK] Generating PDF and sending emails...");
 
             try {
-                const formattedItems = order.items.map((item: any) => ({
+                const formattedItems = order.items.map((item) => ({
                     name: item.product.name,
                     quantity: item.quantity,
                     price: item.price,
@@ -156,7 +153,7 @@ export async function POST(req: Request) {
 
                 // Send to Admin
                 await resend.emails.send({
-                    from: 'MBlanc Bespoke <system@mblancfits.com>',
+                    from: 'MBlanc Bespoke <hello@mblancfits.com>',
                     to: adminEmail,
                     subject: `New Order Received - #${order.id.slice(-6).toUpperCase()}`,
                     html: `
@@ -168,7 +165,7 @@ export async function POST(req: Request) {
                             <p><strong>Customer:</strong> ${shipping?.name} (${recipientEmail})</p>
                             <p><strong>Amount:</strong> ₦${order.total.toLocaleString()}</p>
                             <p><strong>Payment Gateway:</strong> TransactPay</p>
-                            <p><strong>Items:</strong> ${formattedItems.map((i: any) => `${i.name} (x${i.quantity})`).join(', ')}</p>
+                            <p><strong>Items:</strong> ${formattedItems.map((i) => `${i.name} (x${i.quantity})`).join(', ')}</p>
                             <p><strong>Address:</strong> ${shipping?.address}, ${shipping?.city}</p>
                             <hr />
                             <p>Please log in to the admin panel to manage this order.</p>
@@ -177,14 +174,14 @@ export async function POST(req: Request) {
                 });
 
                 console.log(">>> [TRANSACTPAY WEBHOOK] Emails sent successfully.");
-            } catch (err: any) {
-                console.error(">>> [TRANSACTPAY WEBHOOK] Email/PDF Error:", err);
+            } catch (err: unknown) {
+                console.error(">>> [TRANSACTPAY WEBHOOK] Email/PDF Error:", err instanceof Error ? err.message : err);
             }
         }
 
         return NextResponse.json({ received: true }, { status: 200 });
-    } catch (err: any) {
-        console.error('>>> [TRANSACTPAY WEBHOOK] Critical Error:', err.message);
-        return new Response(`Webhook Error: ${err.message}`, { status: 500 });
+    } catch (err: unknown) {
+        console.error('>>> [TRANSACTPAY WEBHOOK] Critical Error:', err instanceof Error ? err.message : err);
+        return new Response(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}`, { status: 500 });
     }
 }

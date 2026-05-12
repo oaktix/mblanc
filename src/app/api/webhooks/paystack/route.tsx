@@ -32,7 +32,7 @@ export async function POST(req: Request) {
 
         // 2. Process Successful Charge
         if (event.event === 'charge.success') {
-            const { reference, customer, amount } = event.data;
+            const { reference, customer } = event.data;
 
             console.log(">>> [PAYSTACK WEBHOOK] Processing Reference:", reference);
 
@@ -84,9 +84,9 @@ export async function POST(req: Request) {
             console.log(">>> [PAYSTACK WEBHOOK] Database updated successfully.");
 
             // 4. Email & Receipt Logic
-            const shipping = order.shippingDetails as any;
+            const shipping = order.shippingDetails as Record<string, string>;
             const recipientEmail = shipping?.email || customer.email || order.user?.email;
-            const adminEmail = "admin@mblancfits.com";
+            const adminEmail = "thebespokecity@gmail.com";
 
             if (recipientEmail) {
                 console.log(">>> [PAYSTACK WEBHOOK] Generating PDF and sending emails...");
@@ -141,7 +141,7 @@ export async function POST(req: Request) {
 
                     // Send to Admin
                     await resend.emails.send({
-                        from: 'MBlanc Bespoke <system@mblancfits.com>',
+                        from: 'MBlanc Bespoke <hello@mblancfits.com>',
                         to: adminEmail,
                         subject: `New Order Received - #${order.id.slice(-6).toUpperCase()}`,
                         html: `
@@ -161,15 +161,15 @@ export async function POST(req: Request) {
                     });
 
                     console.log(">>> [PAYSTACK WEBHOOK] Emails sent successfully.");
-                } catch (err: any) {
-                    console.error(">>> [PAYSTACK WEBHOOK] Email/PDF Error:", err);
+                } catch (err: unknown) {
+                    console.error(">>> [PAYSTACK WEBHOOK] Email/PDF Error:", err instanceof Error ? err.message : err);
                 }
             }
         }
 
         return NextResponse.json({ received: true }, { status: 200 });
-    } catch (err: any) {
-        console.error('>>> [PAYSTACK WEBHOOK] Critical Error:', err.message);
-        return new Response(`Webhook Error: ${err.message}`, { status: 500 });
+    } catch (err: unknown) {
+        console.error('>>> [PAYSTACK WEBHOOK] Critical Error:', err instanceof Error ? err.message : err);
+        return new Response(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}`, { status: 500 });
     }
 }
