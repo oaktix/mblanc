@@ -10,12 +10,12 @@ export default function AboutExcerpt() {
           {/* Image Side */}
           <div className="w-full lg:w-1/2 relative h-[600px]">
             <div className="absolute inset-0 bg-gold/20 translate-x-4 translate-y-4"></div>
-            {/* Placeholder for actual image */}
-            <div className="absolute inset-0 bg-warm-gray dark:bg-charcoal">
-              <img 
-                src="/images/about-portrait.jpg" 
-                alt="Atelier Portrait" 
-                className="w-full h-full object-cover"
+            {/* Brand logo on a burgundy panel */}
+            <div className="absolute inset-0 bg-burgundy flex items-center justify-center p-12 sm:p-16">
+              <img
+                src="/header-logo.png"
+                alt="MBlanc Bespoke"
+                className="w-full h-full object-contain"
               />
             </div>
           </div>
