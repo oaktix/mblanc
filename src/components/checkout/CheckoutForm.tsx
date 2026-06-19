@@ -2,7 +2,6 @@
 
 import { useCartStore } from "@/store/useCartStore";
 import { useState, useEffect, useCallback } from "react";
-import { usePaystackPayment } from "react-paystack";
 import { motion } from "framer-motion";
 import { X, MessageSquare, Shield, CreditCard, Landmark } from "lucide-react";
 import Script from "next/script";
@@ -15,8 +14,6 @@ declare global {
     };
   }
 }
-
-type PaymentGateway = "paystack" | "transactpay";
 
 export default function CheckoutForm() {
   const { items, getTotalPrice, clearCart } = useCartStore();
@@ -31,7 +28,6 @@ export default function CheckoutForm() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   
   // Payment Gateway State
-  const [paymentGateway, setPaymentGateway] = useState<PaymentGateway>("paystack");
   const [transactpayReady, setTransactpayReady] = useState(false);
   
   // Coupon State
@@ -47,16 +43,6 @@ export default function CheckoutForm() {
   const subtotal = getTotalPrice();
   const discount = appliedCoupon ? appliedCoupon.discount : 0;
   const total = subtotal - discount;
-
-  // ─── Paystack Configuration ────────────────────────────────────────
-  const paystackConfig = {
-    reference: orderId || "",
-    email: email,
-    amount: Math.round(total * 100), // Paystack uses Kobo (Naira * 100)
-    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
-  };
-
-  const initializePaystackPayment = usePaystackPayment(paystackConfig);
 
   // ─── TransactPay Handler ───────────────────────────────────────────
   const initializeTransactpayPayment = useCallback(() => {
@@ -79,7 +65,7 @@ export default function CheckoutForm() {
       country: "NG",
       email: email,
       currency: "NGN",
-      amount: Math.round(total * 100), // TransactPay also uses smallest unit (kobo)
+      amount: Number(total.toFixed(2)), // TransactPay expects MAJOR units (naira), NOT kobo
       reference: orderId,
       merchantReference: orderId,
       description: `MBlanc Bespoke Order #${orderId.slice(-6).toUpperCase()}`,
@@ -115,22 +101,9 @@ export default function CheckoutForm() {
   // ─── Trigger Payment When Order Is Created ─────────────────────────
   useEffect(() => {
     if (orderId && email) {
-      if (paymentGateway === "paystack") {
-        initializePaystackPayment({
-          onSuccess: () => {
-            clearCart();
-            window.location.href = `/checkout/success?order=${orderId}`;
-          },
-          onClose: () => {
-            setLoading(false);
-            setOrderId("");
-          },
-        });
-      } else if (paymentGateway === "transactpay") {
-        initializeTransactpayPayment();
-      }
+      initializeTransactpayPayment();
     }
-  }, [orderId, email, paymentGateway, initializePaystackPayment, initializeTransactpayPayment, clearCart]);
+  }, [orderId, email, initializeTransactpayPayment]);
 
   // ─── Coupon Handler ────────────────────────────────────────────────
   const handleApplyCoupon = async () => {
@@ -176,7 +149,7 @@ export default function CheckoutForm() {
           couponCode: appliedCoupon?.code || null,
           shippingDetails: { name, email, phone, address, city },
           notes: notes,
-          paymentProvider: paymentGateway,
+          paymentProvider: "transactpay",
         })
       });
 
@@ -196,12 +169,6 @@ export default function CheckoutForm() {
       alert(error.message || "Could not initialize checkout. Please try again.");
     }
   };
-
-  // Check if TransactPay keys are configured
-  const transactpayConfigured = !!(
-    process.env.NEXT_PUBLIC_TRANSACTPAY_API_KEY &&
-    process.env.NEXT_PUBLIC_TRANSACTPAY_ENCRYPTION_KEY
-  );
 
   return (
     <>
@@ -293,102 +260,33 @@ export default function CheckoutForm() {
               />
             </div>
 
-            {/* ─── Payment Gateway Selector ─────────────────────────── */}
+            {/* ─── Payment Method ───────────────────────────────────── */}
             <div className="space-y-3 mt-8">
               <label className="block text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">
                 <CreditCard size={12} className="inline mr-1.5 -mt-0.5" />
                 Payment Method
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Paystack Option */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentGateway("paystack")}
-                  className={`relative group p-5 rounded-xl border-2 transition-all duration-300 text-left ${
-                    paymentGateway === "paystack"
-                      ? "border-gold bg-gold/5 dark:bg-gold/10 shadow-lg shadow-gold/10"
-                      : "border-gray-200 dark:border-gray-800 hover:border-gold/40 hover:bg-gray-50 dark:hover:bg-zinc-900/50"
-                  }`}
-                >
-                  {paymentGateway === "paystack" && (
-                    <motion.div
-                      layoutId="gateway-indicator"
-                      className="absolute top-3 right-3 w-5 h-5 bg-gold rounded-full flex items-center justify-center"
-                      transition={{ type: "spring", bounce: 0.3, duration: 0.5 }}
-                    >
-                      <svg className="w-3 h-3 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </motion.div>
-                  )}
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
-                      paymentGateway === "paystack"
-                        ? "bg-[#00C3F7]/10 text-[#00C3F7]"
-                        : "bg-gray-100 dark:bg-gray-900 text-gray-400"
-                    }`}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="3" y="4" width="18" height="3" rx="1"/>
-                        <rect x="3" y="9" width="18" height="3" rx="1"/>
-                        <rect x="3" y="14" width="12" height="3" rx="1"/>
-                        <rect x="3" y="19" width="12" height="3" rx="1"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className={`text-sm font-bold ${paymentGateway === "paystack" ? "text-charcoal dark:text-ivory" : "text-gray-600 dark:text-gray-400"}`}>
-                        Paystack
-                      </h4>
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-gray-400 leading-relaxed">
-                    Cards, Bank Transfer, USSD, Mobile Money
-                  </p>
-                </button>
 
-                {/* TransactPay Option */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentGateway("transactpay")}
-                  className={`relative group p-5 rounded-xl border-2 transition-all duration-300 text-left ${
-                    paymentGateway === "transactpay"
-                      ? "border-gold bg-gold/5 dark:bg-gold/10 shadow-lg shadow-gold/10"
-                      : "border-gray-200 dark:border-gray-800 hover:border-gold/40 hover:bg-gray-50 dark:hover:bg-zinc-900/50"
-                  }`}
-                >
-                  {paymentGateway === "transactpay" && (
-                    <motion.div
-                      layoutId="gateway-indicator"
-                      className="absolute top-3 right-3 w-5 h-5 bg-gold rounded-full flex items-center justify-center"
-                      transition={{ type: "spring", bounce: 0.3, duration: 0.5 }}
-                    >
-                      <svg className="w-3 h-3 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </motion.div>
-                  )}
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
-                      paymentGateway === "transactpay"
-                        ? "bg-emerald-500/10 text-emerald-500"
-                        : "bg-gray-100 dark:bg-gray-900 text-gray-400"
-                    }`}>
-                      <Landmark size={20} />
-                    </div>
-                    <div>
-                      <h4 className={`text-sm font-bold ${paymentGateway === "transactpay" ? "text-charcoal dark:text-ivory" : "text-gray-600 dark:text-gray-400"}`}>
-                        TransactPay
-                      </h4>
-                    </div>
+              {/* TransactPay (sole gateway) */}
+              <div className="relative p-5 rounded-xl border-2 border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-500/10 shadow-lg shadow-emerald-500/10">
+                <div className="absolute top-3 right-3 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-emerald-500/10 text-emerald-500">
+                    <Landmark size={20} />
                   </div>
-                  <p className="text-[10px] text-gray-400 leading-relaxed">
-                    Cards, Bank Transfer, OPay Wallet
-                  </p>
-                  {!transactpayConfigured && (
-                    <span className="absolute bottom-2 right-3 text-[8px] uppercase tracking-widest text-amber-500 font-bold">
-                      Coming Soon
-                    </span>
-                  )}
-                </button>
+                  <div>
+                    <h4 className="text-sm font-bold text-charcoal dark:text-ivory">
+                      TransactPay
+                    </h4>
+                  </div>
+                </div>
+                <p className="text-[10px] text-gray-400 leading-relaxed">
+                  Cards, Bank Transfer, OPay Wallet
+                </p>
               </div>
 
               <div className="flex items-center gap-2 mt-2 px-1">
@@ -414,17 +312,11 @@ export default function CheckoutForm() {
 
             <button
               type="submit"
-              disabled={loading || !acceptedTerms || items.length === 0 || (paymentGateway === "transactpay" && !transactpayConfigured)}
+              disabled={loading || !acceptedTerms || items.length === 0}
               className={`w-full py-5 bg-burgundy text-white font-bold uppercase tracking-[0.3em] text-xs transition-all duration-500 shadow-xl ${(loading || !acceptedTerms || items.length === 0) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-black hover:tracking-[0.4em]'}`}
             >
               {loading ? "Processing Securely..." : `Complete Payment — ₦${total.toLocaleString()}`}
             </button>
-
-            {paymentGateway === "transactpay" && !transactpayConfigured && (
-              <p className="text-center text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-2">
-                TransactPay will be available once API keys are configured. Please use Paystack for now.
-              </p>
-            )}
           </form>
         </motion.div>
 
@@ -503,10 +395,8 @@ export default function CheckoutForm() {
             {/* Payment Gateway Badge */}
             <div className="mt-6 pt-4 border-t border-gold/10 flex items-center justify-center gap-2">
               <span className="text-[9px] uppercase tracking-[0.15em] text-gray-400">Powered by</span>
-              <span className={`text-[10px] font-bold uppercase tracking-widest ${
-                paymentGateway === "paystack" ? "text-[#00C3F7]" : "text-emerald-500"
-              }`}>
-                {paymentGateway === "paystack" ? "Paystack" : "TransactPay"}
+              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">
+                TransactPay
               </span>
             </div>
           </div>

@@ -95,7 +95,7 @@ export async function POST(req: Request) {
                 couponCode: couponCode || null,
                 status: "PENDING",
                 paymentStatus: "PENDING",
-                paymentProvider: paymentProvider || "paystack",
+                paymentProvider: paymentProvider || "transactpay",
                 shippingDetails: shippingDetails,
                 notes: notes || null,
                 userId: finalUserId,

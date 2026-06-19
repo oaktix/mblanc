@@ -72,7 +72,7 @@ model Order {
   status          OrderStatus @default(PENDING)
   shippingDetails Json?
   paymentStatus   String      @default("PENDING")
-  paymentProvider String      @default("paystack")
+  paymentProvider String      @default("transactpay")
   paystackRef     String?     @unique
   transactpayRef  String?     @unique
   createdAt       DateTime    @default(now())

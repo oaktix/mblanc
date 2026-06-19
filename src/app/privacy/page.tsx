@@ -29,7 +29,7 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc pl-6 space-y-2 mt-4">
               <li><strong>Identity Data:</strong> includes first name, last name, username or similar identifier, and title.</li>
               <li><strong>Contact Data:</strong> includes billing address, delivery address, email address and telephone numbers.</li>
-              <li><strong>Financial Data:</strong> includes payment card details (processed securely via Paystack, we do not store your raw card details).</li>
+              <li><strong>Financial Data:</strong> includes payment card details (processed securely via TransactPay, we do not store your raw card details).</li>
               <li><strong>Transaction Data:</strong> includes details about payments to and from you and other details of products you have purchased from us.</li>
               <li><strong>Measurement Data:</strong> includes your bespoke physical measurements required for tailoring your garments.</li>
             </ul>

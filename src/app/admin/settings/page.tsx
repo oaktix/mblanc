@@ -151,33 +151,13 @@ export default function AdminSettingsPage() {
          <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-black rounded-xl">
                <div>
-                  <p className="text-sm font-bold">Paystack Integration</p>
-                  <p className="text-xs text-gray-500">Accept payments via credit card, bank transfer, and USSD.</p>
+                  <p className="text-sm font-bold">TransactPay Integration</p>
+                  <p className="text-xs text-gray-500">Accept cards, bank transfers, and OPay wallet payments.</p>
                </div>
                <div className="flex items-center gap-3">
                   <span className="text-[9px] font-bold uppercase tracking-widest text-green-500">Active</span>
                   <div className="w-12 h-6 bg-gold rounded-full relative cursor-pointer">
                      <div className="absolute right-1 top-1 w-4 h-4 bg-black rounded-full"></div>
-                  </div>
-               </div>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-black rounded-xl">
-               <div>
-                  <p className="text-sm font-bold">TransactPay Integration</p>
-                  <p className="text-xs text-gray-500">Accept cards, bank transfers, and OPay wallet payments.</p>
-               </div>
-               <div className="flex items-center gap-3">
-                  {process.env.NEXT_PUBLIC_TRANSACTPAY_API_KEY ? (
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-green-500">Active</span>
-                  ) : (
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-500">Pending Keys</span>
-                  )}
-                  <div className={`w-12 h-6 rounded-full relative cursor-pointer ${
-                    process.env.NEXT_PUBLIC_TRANSACTPAY_API_KEY ? 'bg-gold' : 'bg-gray-300 dark:bg-gray-700'
-                  }`}>
-                     <div className={`absolute top-1 w-4 h-4 bg-black rounded-full transition-all ${
-                       process.env.NEXT_PUBLIC_TRANSACTPAY_API_KEY ? 'right-1' : 'left-1'
-                     }`}></div>
                   </div>
                </div>
             </div>
@@ -190,7 +170,7 @@ export default function AdminSettingsPage() {
             <div>
                <h4 className="text-sm font-bold text-burgundy mb-1">System Status: Operational</h4>
                <p className="text-xs text-burgundy/60 font-light">
-                 Connected to Supabase (US-East) • Next.js 15.1.4 • Paystack Live API Enabled
+                 Connected to Supabase (US-East) • Next.js 15.1.4 • TransactPay Live API Enabled
                </p>
             </div>
          </div>

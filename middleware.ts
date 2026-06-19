@@ -22,7 +22,7 @@ export default withAuth(
     const withPathname = NextResponse.next({ request: { headers: requestHeaders } });
 
     // Always allow webhooks
-    if (pathname.startsWith("/api/webhooks/paystack")) {
+    if (pathname.startsWith("/api/webhooks/transactpay")) {
       return withPathname;
     }
 
@@ -65,7 +65,7 @@ export default withAuth(
         const { pathname } = req.nextUrl;
 
         // Always allow webhooks
-        if (pathname.startsWith("/api/webhooks/paystack")) return true;
+        if (pathname.startsWith("/api/webhooks/transactpay")) return true;
 
         // Allow public admin paths (login, forgot/reset password)
         if (PUBLIC_ADMIN_PATHS.includes(pathname)) return true;
@@ -84,6 +84,7 @@ export const config = {
     "/admin",
     "/admin/:path*",
     "/account/:path*",
-    "/api/webhooks/paystack/:path*",
+    "/api/webhooks/transactpay",
+    "/api/webhooks/transactpay/:path*",
   ],
 };

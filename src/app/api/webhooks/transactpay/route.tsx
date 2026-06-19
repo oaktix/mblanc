@@ -4,6 +4,7 @@ import { resend } from '@/lib/resend';
 import { OrderStatus } from '@prisma/client';
 import { OrderConfirmationEmail } from '@/components/emails/OrderConfirmationEmail';
 import { render } from '@react-email/render';
+import { verifyTransactPayOrder, isTransactPaySuccess } from '@/lib/transactpay';
 
 /**
  * TransactPay Webhook Handler
@@ -27,27 +28,36 @@ export async function POST(req: Request) {
             console.warn(">>> [TRANSACTPAY WEBHOOK] WARNING: Using dummy Resend API key!");
         }
 
-        // TODO: Add TransactPay signature verification once API keys are configured
-        // TransactPay may send a signature header for verification — check their docs.
-        // For now, we validate by checking the order exists and matches expected data.
-
-        const reference = event?.data?.reference || event?.reference;
-        const status = event?.data?.status || event?.status;
+        // Extract our order id (sent as merchantReference). Handle TransactPay's
+        // real field names case-insensitively; use the first truthy value.
+        const reference =
+            event?.data?.merchantReference ||
+            event?.data?.MerchantReference ||
+            event?.data?.orderReference ||
+            event?.data?.OrderReference ||
+            event?.merchantReference ||
+            event?.MerchantReference ||
+            event?.reference ||
+            event?.data?.reference;
 
         if (!reference) {
             console.error(">>> [TRANSACTPAY WEBHOOK] No reference in payload");
             return NextResponse.json({ error: "No reference provided" }, { status: 400 });
         }
 
-        console.log(">>> [TRANSACTPAY WEBHOOK] Processing Reference:", reference, "Status:", status);
+        console.log(">>> [TRANSACTPAY WEBHOOK] Processing Reference:", reference);
 
-        // Check if payment was successful
-        const isSuccessful = status?.toLowerCase() === "successful" || 
-                             status?.toLowerCase() === "success" ||
-                             event?.event === "charge.success";
+        // Determine success authoritatively via server-side verification.
+        const verify = await verifyTransactPayOrder(reference);
+        const payloadSuccess = isTransactPaySuccess(event);
+        // Prefer server verification. If the verify call was unreachable (ok=false),
+        // fall back to the webhook payload signal.
+        const isSuccessful = verify.ok ? verify.successful : payloadSuccess;
+
+        console.log(">>> [TRANSACTPAY WEBHOOK] Verification:", { verify, payloadSuccess, isSuccessful });
 
         if (!isSuccessful) {
-            console.log(">>> [TRANSACTPAY WEBHOOK] Non-success status:", status);
+            console.log(">>> [TRANSACTPAY WEBHOOK] Non-success determination. Skipping.");
             return NextResponse.json({ received: true }, { status: 200 });
         }
 
@@ -87,7 +97,7 @@ export async function POST(req: Request) {
             data: {
                 status: OrderStatus.PROCESSING,
                 paymentStatus: "SUCCESS",
-                transactpayRef: event?.data?.transactionId || reference,
+                transactpayRef: event?.data?.paymentReference || event?.data?.PaymentReference || event?.data?.transactionId || reference,
             },
             include: { 
                 user: true,
@@ -148,7 +158,7 @@ export async function POST(req: Request) {
                     const response = await resend.emails.send({
                         from: 'MBlanc Bespoke <hello@mblancfits.com>',
                         to: recipientEmail,
-                        reply_to: 'thebespokecity@gmail.com',
+                        replyTo: 'thebespokecity@gmail.com',
                         subject: `Order Confirmation - #MBLANC-${order.id.slice(-6).toUpperCase()}`,
                         html: emailHtml,
                     });
